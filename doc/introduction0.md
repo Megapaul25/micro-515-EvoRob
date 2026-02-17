@@ -20,7 +20,7 @@ Open the [XML file](../resources/exercise0.xml) and have a look at the elements.
 - the `worldbody` section where you define the actual components of the simulation
 For a comprehensive overview have a look at the [XML reference](https://mujoco.readthedocs.io/en/stable/XMLreference.html).
 
-Run [Exercise0.py](../Exercise0a.py) and explore the simulator. So far we have only defined the floor, light, and a single static box. See if you can spawn
+Run [Introductiona.py](../Introduction0a.py) and explore the simulator. So far we have only defined the floor, light, and a single static box. See if you can spawn
 two additional objects, e.g., spheres.
 
 Now run the simulator again to verify your changes. By adding a `<freejoint/>` tag inside of the `body` tag you can make your newly created objects dynamic.

@@ -9,7 +9,7 @@ In Challenge 1, you will evolutionary algorithms to evolve a neural controller t
 
 <a><img src="imgs/ant_locomote.gif" width="200" align="right" /></a>
 
-In this exercise, you will ...
+In this challenge, you will ...
 - implement a learning environment according to the widely used OpenAI Gymnasium convention [Towers et al. 2024](https://arxiv.org/abs/2407.17032) for the high-dimensional benchmark environment `Ant`,
 - interface the environment with a state-of-the-art evolutionary algorithm of your choice,
 - design your own evolvable neural network controller and an oscillatory controller
@@ -17,9 +17,9 @@ In this exercise, you will ...
 
 ## Good to know!
 
-This code in this exercise has three main running scripts ([Exercise 1a](/Exercise1a.py), [Exercise 1b](/Exercise1b.py), [Exercise 1c](/Exercise1c.py)) provided in directly in the exercise. You will need to make them functional by solving the `#TODOs` in the `evorob` codebase.
+This code in this exercise has three main running scripts ([Challenge 1a](/Challenge1a.py), [Challenge 1b](/Challenge1b.py), [Challenge 1c](/Challenge1c.py)) provided in directly in the exercise. You will need to make them functional by solving the `#TODOs` in the `evorob` codebase.
 
-## Exercise 1a: OpenAI Gym Convention
+## Challenge 1a: OpenAI Gym Convention
 
 We will implement our own version of the `Ant`-environment. The `Ant` is a four-legged abstract robot where we read the joint angles and velocities and control the torque in 8 joints to make the robot run as fast as possible. 
 
@@ -84,10 +84,10 @@ class YourGymEnvironment
 
 4. Define the termination function (`_get_termination()`) where we terminate (and reset) the environment, when our robot torso height is below $0.25$ (falling) or above $1.0$ (jumping). (**Hint**: You can access the height via `torso_height = self.state_vector()[2]`)
 
-5. Now execute the main running script (`python3 Exercise1a.py`) and see if your environment is well-defined.
+5. Now execute the main running script (`python3 Challenge1a.py`) and see if your environment is well-defined.
 
 
-## Exercise 1a: Neural Network Controller
+## Challenge 1a: Neural Network Controller
 
 Now, we need a structure to decide which actions to take given the current observation. Sufficiently large Feedforward Neural Networks or Multi-layer Perceptrons are in theory capable to approximate any continuous function (see Universal Approximation Theorem), which provides a powerful structure to optimize for evolution.
 
@@ -140,9 +140,9 @@ class NeuralNetworkController(Controller):
 
 5. Evolutionary algorithms used in this class will provide a direct genetic encoding with size `(n_params, 1)` for each population member. Implement the weight setter (`set_weights( )`), where the encoding is mapped to the weight matrices. (**Hint**: Split the encoding according the respective number of parameters using NumPy's [array slicing](https://numpy.org/doc/stable/user/basics.indexing.html) and then use [`np.reshape`](https://numpy.org/devdocs/reference/generated/numpy.reshape.html) with the previous matrices).
 
-6. Now execute the main running script (`python3 Exercise1a.py`) and see if your neural network controller is well-defined.
+6. Now execute the main running script (`python3 Challenge1a.py`) and see if your neural network controller is well-defined.
 
-## Exercise 1a: Evolutionary Algorithm Framework
+## Challenge 1a: Evolutionary Algorithm Framework
 
 Congratulations, you have a functional training environment and a neural controller. Instead of writing our own evolutionary algorithm, we can also use rigorously tested public frameworks: there are numerous projects available. A lot of implementations use a so-called `ask-tell`-interface, which looks like this:
 
@@ -176,12 +176,12 @@ class PowerfulEvolutionaryAlgorithm:
 
 4. Implement the interface so that the parameters of your framework are correctly assigned at initialization, that the `ask()` generates a population of solutions in the following format `(population_id, neural_network_parameter)` and the tell internally updates the state. (**Hint**: `cma-es` requires the parameters to be passed as `dict` datastructure called `opts`, `evosax` required manually handeling of state and random keys.)
 
-5. Now execute the main running script (`python3 Exercise1a.py`) and see if your evolutionary algorithm API is well-defined.
+5. Now execute the main running script (`python3 Challenge1a.py`) and see if your evolutionary algorithm API is well-defined.
 
 
-## Exercise 1a: Run evolution
+## Challenge 1a: Run evolution
 
-Checkout the full script of `Exercise1a.py` [/Exercise1a.py](/Exercise1a.py) and uncomment the `run_evolution_neural_controller()` function to enable the full evolutionary run. Your goal is to achieve a fitness score of at least $800$ given the correct reward function. Here some small guideline:
+Checkout the full script of `Challenge1a.py` [/Challenge1a.py](/Challenge1a.py) and uncomment the `run_evolution_neural_controller()` function to enable the full evolutionary run. Your goal is to achieve a fitness score of at least $800$ given the correct reward function. Here some small guideline:
 
 - Blackbox optimizers such as evolutionary algorithms (not unlike real biological evolution) can take significant time to achieve sufficient performance. Run your evolutionary algorithm for at least 300 generations for the final run. 
 
@@ -202,7 +202,7 @@ Checkout the full script of `Exercise1a.py` [/Exercise1a.py](/Exercise1a.py) and
 - Population size is a highly critical parameter for most variants of evolutionary strategies: if too low, the algorithm might not discover better solutions, if too high, even outstanding genotypes might be averaged away. For the `Ant`, we recommend at least $250$ population members. Note that the computation time scales linearly with population size.
 
 
-## Exercise 1b: Evolving Oscillatory Controller
+## Challenge 1b: Evolving Oscillatory Controller
 
 While in theory MLP neural networks can facilitate any continuous function, in practice evolutionary algorithms but also backpropagation is usually not discovering an optimal mapping. Therefore, it might be useful to include a so-called inductive bias. Unlike policy gradient methods used in reinforcement learning, evolutionary algorithms do not require differentiable architectures. So we easily include the following assumption: For flat terrain locomotion, a good controller will generate a periodic / sinosoidal signal.
 
@@ -244,12 +244,12 @@ class OscillatoryController:
         self.time_step = 0.0
 ```
 
-3. Now execute the main running script (`python3 Exercise1b.py`) and see if your oscillatory controller is well-defined.
+3. Now execute the main running script (`python3 Challenge1b.py`) and see if your oscillatory controller is well-defined.
 
 4. Uncomment `run_evolution_oscillatory_controller()` and execute the evolution with the oscillatory controller. **Question**: How does the initial fitness, the fitness convergence over generations and the best fitness compare between oscillatory and neural controller on this locomotion task for the same evolutionary algorithm (including the same hyperparameter settings)? Can you think of a scenario where the neural controller will outperform the oscillatory controller?
  
 
-## Exercise 1c: Deep Reinforcement Learning
+## Challenge 1c: Deep Reinforcement Learning
 
 The training environment with Gymnasium can also be used to perform deep reinforcement learning. One of the most popular algorithms is Proximal Policy Optimization (PPO) proposed by (Schulman et al. 2017)[https://doi.org/10.48550/arXiv.1707.06347]. PPO is comparatively robust to different hyperparameter choices and is capable of solving tasks with high complexity when combined with sophisticated reward shaping. Here, we will compare your evolutionary algorithm with PPO. 
 
@@ -259,7 +259,7 @@ The training environment with Gymnasium can also be used to perform deep reinfor
 
 1. Check the documentation of [`stable-baselines3`](https://stable-baselines3.readthedocs.io/) and install the package via pip.
 
-2. Check the main running script [Exercise1c.py](/Exercise1c.py) and import your environment using the `make_vec()` function of `stable-baselines3`. (**Hint**: `make_vec` accepts your class directly an does not require registration via `gymnasium.register`).
+2. Check the main running script [Challenge1c.py](/Challenge1c.py) and import your environment using the `make_vec()` function of `stable-baselines3`. (**Hint**: `make_vec` accepts your class directly an does not require registration via `gymnasium.register`).
 
 3. Run the training and compare the evolutionary algorithm with deep reinforcement learning. Note that episode return is comparable to the masked fitness used in the `evorob` framework. **Question**: How does episode return, convergence behavior over training steps and the converged final performance compare between reinforcement learning and evolution? 
 

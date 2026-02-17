@@ -8,12 +8,12 @@ In Challenge 2, you will use multi-objective evolutionary algorithms to evolve s
 
 <a><img src="imgs/ant_locomote.gif" width="200" align="right" /></a>
 
-In this exercise, you will ...
+In this challenge, you will ...
 - implement the baseline multi-objective evolutionary algorithm __Non-sorting Genetic Algorithm II__ proposed by [Deb et al. 2002](https://doi.org/10.1109/4235.996017).
 - compare single-objective specialist controllers to controllers on the Pareto front evolved by your multi-objective algorithm.
 
 
-## Exercise 2: NSGA-II implementation
+## Challenge 2: NSGA-II implementation
 
 NSGA-II is a popular baseline algorithm for multi-objective optimization. The following figure illustrates the working principle of NSGA-II. Checkout the original publication [Deb et al. 2002](https://doi.org/10.1109/4235.996017) and the lecture material to familiarize with the concept of NSGA-II. 
 
@@ -63,14 +63,14 @@ class NSGAII():
 >    1. $\forall i \in {1, \dots, k}, f_i(x) \leq f_i(y)$ --> Solution ($x$) is no worse than Solution ($y$) in all objectives.
 >    2. $\exists i \in {1, \dots, k}, f_i(x) < f_i(y)$ --> Solution ($x$) is strictly better than Solution ($y$) in at least one objective.
 
-3. Now execute the main running script (`python3 Exercise2.py`) and see if your `dominates`-function is well-defined.
+3. Now execute the main running script (`python3 Challenge2.py`) and see if your `dominates`-function is well-defined.
 
 4. Implement the `fast_nondominated_sort`-function. The sorting is usually done in two parts, where first all individuals are compared against each other. 
 
-## Exercise 2: Single vs. Multi-objective Evolution
+## Challenge 2: Single vs. Multi-objective Evolution
 ...
 
-# Challenge 2 Submission Details
+# Challenge 2: Submission Details
 
 The given exercise should provide an fundamental understanding of practical aspects of evolutionary robotics and concepts explained in the lecture. We encourage you to experiment with different evolutionary algorithms, hyperparameter settings and perform modifications to control architecture and learning curriculum in order to evolve the fastest flat-terrain Ant in __MICRO-515__ history!
 
