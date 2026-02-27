@@ -116,7 +116,7 @@ class PassiveWalkerWorld(World):
                 break
         env.close()
         # TODO: investigate the effects of different fitness functions
-        # print(info)
+        #print(info)
         return sum(rewards_list)
 
 

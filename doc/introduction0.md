@@ -44,7 +44,7 @@ of an ES. The use of simple test-functions is important for debugging.
 
 *Q.0.1*
 
-* ESs are ‘blackbox’ optimisers that require minimal information on the problem. Nevertheless, what information is still needed for the ES to optimise the parameters in the **World**?
+* ESs are ‘blackbox’ optimisers that require minimal information on the problem. Nevertheless, what information is still needed for the ES to optimise the parameters in the **World**? Need the parameters to optimize (size, type, ect), the fitness function, stop criteria
 
 *Q.0.2*
 ```python
@@ -85,7 +85,7 @@ class ES:
 | The ES class is provided with standard functionalities (such as tracking results, and loading from checkpoints), but still lacks the functionality to optimize properly.|
 | :---- |
 
-* The ES class uses the ask/tell interface that receives and provides certain inputs and outputs. What are the inputs and outputs of the ask/tell interface?
+* The ES class uses the ask/tell interface that receives and provides certain inputs and outputs. What are the inputs and outputs of the ask/tell interface? ask() outputs a set of candidate parameter vectors sampled from the current search distribution. tell() receives the evaluated candidate solutions together with their fitness values and updates the internal parameters of the ES (mean, variance, etc.).
 
 * The ES class is provided with automatic bookkeeping during optimisation. We can retrieve the stored data for plotting results. What do the array dimension
   of the \*.npy files correspond with (generations/individuals/genes/fitnesses/…?). Analyse the data obtained with
@@ -104,12 +104,13 @@ foot (no ankle joint). The leg segment lengths (genotype) are parsed into robot 
 
 *Q2.0* Look in the step() function of the custom gym environment [evorob/world/envs/passive_walker.py](../evorob/world/envs/passive_walker.py)
 
-* What is the current reward function?
+* What is the current reward function?   Only the forward velocity, the fastest we go the better
 
 | Improve the reward function |
 | :---- |
 
 * In the same step() function a termination clause is built-in to save simulation time. What are the termination criteria?
+Walker Fell off the platform, Walker not moving for 10 seconds!!
 
 *Q2.1* The geno2pheno() function translates the genotype (a vector describing the leg segment lengths) to a phenotype (a graph-description of a robot). The graph-description consists of the (x,y,z) Cartesian coordinates that represent nodes (points), and a connectivity matrix that defines how nodes are connected (connectivity\_matrix). You can imagine the graph as a set of nodes (whose locations are defined by points) whose connections are rigid bodies (defined by a connectivity matrix).  
 The figure above shows a graph-description for our passive dynamic walker: a base rigid body at the top, with nodes as circles and leg segments ( e.g. right\_up\_leg) as lines. The points, (x,y,z)-locations, are changed during optimization as we evolve the leg segment lengths. How nodes are connected remains the same, thus the connectivity\_matrix remains the same.

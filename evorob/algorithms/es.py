@@ -89,19 +89,27 @@ class ES(EA):
     def initialise_x0(self):
         """Initialises the first population."""
         # TODO: generate the initial population mean vector (current_mean)
-        mean_vector = ...
+        mean_vector = np.random.uniform(self.min, self.max, 
+                                    (self.n_pop, self.n_params))
         return mean_vector
 
     def update_sigma(self):
         """Update the perturbation strength (sigma)."""
         # TODO: implement a decay of the sigma value over generations, ensuring it does not go below min_sigma
-        self.current_sigma = ...
+        self.current_sigma = max(self.min_sigma, self.current_sigma * self.sigma_decay_rate)
 
     def sort_and_select_parents(self, population, fitness, num_parents):
         """Sorts the population based on fitness and selects the top individuals as parents."""
         # TODO: sort the population and fitness based on fitness values, and select the top num_parents individuals as parents
-        parent_population = ...
-        parent_fitness = ...
+        # Sort indices in descending fitness order
+        sorted_indices = np.argsort(fitness)[::-1]
+    
+        # Select top parents
+        parent_indices = sorted_indices[:num_parents]
+    
+        parent_population = population[parent_indices]
+        parent_fitness = fitness[parent_indices]
+
 
         return parent_population, parent_fitness
 
@@ -109,21 +117,29 @@ class ES(EA):
         # TODO: compute the new population mean as a weighted average of the parent population, where the weights are based on the parent fitness
         # (you can use rank or raw fitness values)
         # Normalise parent fitness scores
-        normed_parents_fitness = ...
+
+        # Avoid division by zero / negative scaling
+        fitness_shifted = parent_fitness - np.min(parent_fitness) + 1e-8
+
+        # Normalize fitness
+        normed_parents_fitness = fitness_shifted / np.sum(fitness_shifted)
 
         # Compute population weighted to the normed fitness scores
-        weighted_parents_population = ...
+        weighted_parents_population = parent_population * normed_parents_fitness[:, None]
+
+        # New mean vector
+        updated_mean_vector = np.sum(weighted_parents_population, axis=0)
 
         # Calculate the sum of weighted parents population
-        updated_mean_vector = ...
+        self.current_mean = updated_mean_vector
 
         return updated_mean_vector
 
     def generate_mutated_offspring(self, population_size):
         """Generates a new population by adding Gaussian noise to the current mean."""
         # TODO: generate a new population by adding Gaussian noise to the current mean, where the noise is scaled by the current sigma value
-        perturbation = ...
-        mutated_population = ...
+        perturbation =  np.random.randn(population_size, self.n_params) * self.current_sigma
+        mutated_population = self.current_mean + perturbation
 
         return mutated_population
 

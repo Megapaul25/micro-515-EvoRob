@@ -33,7 +33,10 @@ class PassiveWalker(MujocoEnv, utils.EzPickle):
         robot_path: str,
         frame_skip: int = 5,
         default_camera_config: Dict[str, float] = DEFAULT_CAMERA_CONFIG,
+        ###Weight
         forward_reward_weight: float = 1,
+        #distanceX_reward_weight: float = 2,
+        ###
         main_body: Union[int, str] = 1,
         reset_noise_scale: float = 0.0,
         exclude_current_positions_from_observation: bool = False,
@@ -54,7 +57,10 @@ class PassiveWalker(MujocoEnv, utils.EzPickle):
             xml_file_path,
             frame_skip,
             default_camera_config,
+            ###WEIGHT
             forward_reward_weight,
+            #distanceX_reward_weight,
+            ###
             main_body,
             reset_noise_scale,
             exclude_current_positions_from_observation,
@@ -140,13 +146,25 @@ class PassiveWalker(MujocoEnv, utils.EzPickle):
         self.do_simulation(action, self.frame_skip)
         xy_position_after = self.data.body(self._main_body).xpos[:2].copy()
 
+        x_position_before = xy_position_before[0]
+        x_position_after = xy_position_after[0]
+        y_position_before = xy_position_before[1]
+        y_position_after = xy_position_after[1]
         xy_velocity = (xy_position_after - xy_position_before) / self.dt
         x_velocity, y_velocity = xy_velocity
 
-        forward_reward = x_velocity * self._forward_reward_weight
+        #forward_reward = x_velocity * self._forward_reward_weight
+        #distanceX_reward = (x_position_after-x_position_before) * 2
+        #distanceY_reward = (y_position_after-y_position_before) * -3
+
+        forward_reward = x_velocity
+
+        lateral_penalty = -0.5 * abs(y_position_after)
+
+        energy_penalty = -0.001 * np.sum(np.square(action))
 
         #TODO
-        reward = forward_reward
+        reward = forward_reward + lateral_penalty + energy_penalty
         observation = self._get_obs()
         info = {
             "reward_forward": forward_reward,
