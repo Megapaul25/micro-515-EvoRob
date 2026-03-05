@@ -284,7 +284,7 @@ def run_evolution_neural_controller(
 
                 if np.logical_or(terminated, truncated):
                     trial_count += 1
-                    print(f"Trial {trial_count} reward: {float(trial_reward):.2f}")
+                    print(f"Trial {trial_count} reward: {float(trial_reward[0]):.2f}")
                     trial_reward = 0.0
                     obs, _ = evaluation_env.reset()
 

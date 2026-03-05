@@ -26,16 +26,16 @@ class NeuralNetworkController(Controller):
         self.n_output = output_size
         self.n_hidden = hidden_size
 
-        # TODO: Initialize weight matrices with uniform random values in [-1, 1]
+        # TODO: Initiaalize weight matrices with uniform random values in [-1, 1]
         # - self.input_to_hidden: shape (hidden_size, input_size)
         # - self.hidden_to_output: shape (output_size, hidden_size)
         # Hint: Use np.random.uniform(-1, 1, (rows, cols))
-        self.input_to_hidden = ...  # TODO!
-        self.hidden_to_output = ...  # TODO!
+        self.input_to_hidden = np.random.uniform(low=-1.0, high=1.0, size=(self.n_hidden, self.n_input))  # TODO!
+        self.hidden_to_output = np.random.uniform(low=-1.0, high=1.0, size=(self.n_output, self.n_hidden))  # TODO!
 
         # TODO: Compute number of parameters in each layer
-        self.n_params_i2h = ...  # TODO!
-        self.n_params_h2o = ...  # TODO!
+        self.n_params_i2h = self.n_hidden * self.n_input  # TODO!
+        self.n_params_h2o = self.n_output * self.n_hidden  # TODO!
 
         self.n_params = self.get_num_params()
 
@@ -57,8 +57,18 @@ class NeuralNetworkController(Controller):
         # Hint: Use @ operator or np.matmul for matrix multiplication
         # Hint: .T transposes a matrix
         # Hint: np.tanh() applies tanh element-wise
-        raise NotImplementedError("TODO: Implement forward pass")
-
+        #print("Size input_to_hidden" , self.input_to_hidden.shape)
+        #print("Size state", state.shape)
+        #print("Size hidden to output", self.hidden_to_output.shape)
+        
+        hidden = np.tanh(self.input_to_hidden @ state.T)
+        #print("Size hidden", hidden.shape)
+        output = np.tanh(self.hidden_to_output @ hidden)
+        action = np.clip(output, -1.0, 1.0)
+        #print("action shape:", action.shape)
+        #raise NotImplementedError("TODO: Implement forward pass")
+        return action.T
+    
     def set_weights(self, encoding):
         """Set network weights from a flat parameter vector.
 
@@ -73,7 +83,15 @@ class NeuralNetworkController(Controller):
         #
         # Hint: Use array slicing: encoding[:n] and encoding[n:]
         # Hint: Use np.reshape(array, (rows, cols)) or array.reshape((rows, cols))
-        raise NotImplementedError("TODO: Implement weight setting")
+        # split encoding
+        i2h_flat = encoding[:self.n_params_i2h]
+        h2o_flat = encoding[self.n_params_i2h:]
+
+        # reshape to weight matrices
+        self.input_to_hidden = i2h_flat.reshape(self.n_hidden, self.n_input)
+        self.hidden_to_output = h2o_flat.reshape(self.n_output, self.n_hidden)
+        #raise NotImplementedError("TODO: Implement weight setting")
+        return
 
     def geno2pheno(self, genotype):
         """Alias for set_weights (genotype to phenotype mapping)."""
@@ -83,6 +101,7 @@ class NeuralNetworkController(Controller):
         # To provide a genetic encoding for our neural network controller,
         # we compute and store the number of parameters in our NN class.
         # TODO: Return the total number of parameters in both layers!
+        return (self.n_params_i2h + self.n_params_h2o) 
         raise NotImplementedError
 
     def reset_controller(self, batch_size=1) -> None:
