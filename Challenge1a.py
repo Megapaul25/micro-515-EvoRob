@@ -193,6 +193,7 @@ def run_evolution_neural_controller(
     num_generations: int,
     population_size: int,
     ckpt_interval: int,
+    sigma: float,
     checkpoint_path: Optional[str] = None,
     run_evaluation: bool = True,
     compute_score: bool = True,
@@ -220,7 +221,7 @@ def run_evolution_neural_controller(
     # Create evolutionary algorithm with checkpointing
     num_params = world.n_params
     ea = EvoAlgAPI(
-        num_params, population_size=population_size, sigma=0.5, output_dir=ckpt_dir
+        num_params, population_size=population_size, sigma=sigma, output_dir=ckpt_dir
     )
 
     # Evolution loop (checkpointing happens automatically in ea.tell())
@@ -436,9 +437,10 @@ if __name__ == "__main__":
 
     # Uncomment to run full evolution:
     run_evolution_neural_controller(
-        num_generations=100,
-        population_size=10,
+        num_generations=5000,
+        population_size=50,
         ckpt_interval=5,
+        sigma = 0.5,
         checkpoint_path=None,
         run_evaluation=True,
         compute_score=True,

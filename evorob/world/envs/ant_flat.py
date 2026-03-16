@@ -115,12 +115,14 @@ class AntFlatEnvironment(MujocoEnv):
         # 3. ctrl_cost = ...
         # Final reward is the sum of these three components.
         # Return: (reward, reward_info_dict)
-        forward_reward = 2*x_velocity
+        forward_reward = x_velocity
         
         if not self._get_termination() : healthy_reward = 1.0
         else : healthy_reward = 0.0
         ctrl_cost = -0.5*sum(np.square(action))
-        reward = forward_reward + healthy_reward + ctrl_cost
+        # Penalty for immobility
+        immob_penalty = -1 * (abs(x_velocity) < 0.1)
+        reward = forward_reward + healthy_reward + ctrl_cost + immob_penalty
         reward_info_dict = {"reward_forward": forward_reward, "reward_survive": healthy_reward, "reward_ctrl": ctrl_cost,}
         #raise NotImplementedError("TODO: Implement reward function")
         #print(reward_info_dict)

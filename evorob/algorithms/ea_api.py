@@ -17,7 +17,7 @@ class EvoAlgAPI(EA):
     - EvoJAX: https://github.com/google/evojax
     """
 
-    def __init__(self, n_params: int, population_size: int = 100, num_generations: int = 100,
+    def __init__(self, n_params: int, population_size: int = 50, num_generations: int = 200,
                  output_dir: str = "./results/EA", **kwargs):
         """Initialize the evolutionary algorithm.
 
@@ -33,9 +33,13 @@ class EvoAlgAPI(EA):
         self.n_gen = num_generations
         self.population_size = population_size
         
+        print("population size", population_size)
+        #print("n_gen", num_generations)
         x0 = np.zeros(n_params)
-        sigma0 = 0.5
-        inopts={'popsize': population_size}#, 'seed': 42}
+        
+        sigma0 = kwargs.get("sigma", 0.15)
+        print("Sigma", sigma0) 
+        inopts={'popsize': population_size}
         self.es = cma.CMAEvolutionStrategy(x0,sigma0,inopts)
 
         # % bookkeeping for base EA

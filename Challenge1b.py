@@ -143,6 +143,7 @@ def run_evolution_oscillatory_controller(
     num_generations: int,
     population_size: int,
     ckpt_interval: int,
+    sigma: float,
     checkpoint_path: Optional[str] = None,
     run_evaluation: bool = True,
     compute_score: bool = True,
@@ -172,7 +173,7 @@ def run_evolution_oscillatory_controller(
     # Create evolutionary algorithm with checkpointing
     num_params = world.n_params
     ea = EvoAlgAPI(
-        num_params, population_size=population_size, sigma=0.5, output_dir=ckpt_dir
+        num_params, population_size=population_size, sigma=sigma, output_dir=ckpt_dir
     )
 
     # Evolution loop (checkpointing happens automatically in ea.tell())
@@ -237,7 +238,7 @@ def run_evolution_oscillatory_controller(
 
                 if np.logical_or(terminated, truncated):
                     trial_count += 1
-                    print(f"Trial {trial_count} reward: {float(trial_reward):.2f}")
+                    print(f"Trial {trial_count} reward: {float(trial_reward[0]):.2f}") #changed to avoid : TypeError: only 0-dimensional arrays can be converted to Python scalars
                     trial_reward = 0.0
                     obs, _ = evaluation_env.reset()
 
@@ -286,9 +287,15 @@ def evaluate_checkpoint(
     print(f"Controller: OscillatoryController  |  Parameters: {controller.n_params}\n")
 
     # --- Run evaluation episodes on the real Ant-v5 ---
+    #env = gym.make(
+    #    "Ant-v5", use_contact_forces=False, max_episode_steps=max_episode_steps
+    #)
     env = gym.make(
-        "Ant-v5", use_contact_forces=False, max_episode_steps=max_episode_steps
+    "Ant-v5",
+    max_episode_steps=max_episode_steps
     )
+    #Changed to avoid error 
+
     rng = np.random.default_rng(seed)
     episode_rewards = []
 
@@ -318,12 +325,19 @@ def evaluate_checkpoint(
 
     # --- Record video ---
     print("\nRecording video...")
+    #video_env = gym.make(
+    #    "Ant-v5",
+    #    use_contact_forces=False,
+    #    max_episode_steps=max_episode_steps,
+    #    render_mode="rgb_array",
+    #)
+
+    #Changed to avoid error
     video_env = gym.make(
-        "Ant-v5",
-        use_contact_forces=False,
-        max_episode_steps=max_episode_steps,
+        "Ant-v5",max_episode_steps=max_episode_steps,
         render_mode="rgb_array",
     )
+
     obs, _ = video_env.reset(seed=seed)
     controller.reset_controller()
     frames = []
@@ -382,6 +396,7 @@ if __name__ == "__main__":
         num_generations=100,
         population_size=10,
         ckpt_interval=5,
+        sigma=0.15,
         checkpoint_path=None,
         run_evaluation=True,
         random_seed=42,
