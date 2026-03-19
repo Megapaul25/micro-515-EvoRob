@@ -393,10 +393,10 @@ if __name__ == "__main__":
 
     # Uncomment to run full evolution:
     run_evolution_oscillatory_controller(
-        num_generations=100,
-        population_size=10,
+        num_generations=3000,
+        population_size=100,
         ckpt_interval=5,
-        sigma=0.15,
+        sigma=0.1,
         checkpoint_path=None,
         run_evaluation=True,
         random_seed=42,
