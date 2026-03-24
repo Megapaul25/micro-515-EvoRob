@@ -5,10 +5,17 @@ from typing import Optional
 import matplotlib.pyplot as plt
 import numpy as np
 
+<<<<<<< HEAD
 from evorob.algorithms.nsga import NSGAII
 from evorob.world.ant_multi_world import AntMultiWorld
 from evorob.world.ant_world import AntFlatWorld
 from evorob.world.robot.controllers.mlp import NeuralNetworkController
+=======
+from evorob.algorithms.nsga_sol import NSGAII
+from evorob.world.ant_multi_world import AntMultiWorld
+from evorob.world.ant_world import AntFlatWorld
+from evorob.world.robot.controllers.mlp_sol import NeuralNetworkController
+>>>>>>> 8c1c7e34320e0087b4e9285a041007c5b24ea038
 
 """ 
     Multi-objective optimisation: Ant two-terrains
@@ -285,6 +292,7 @@ def run_evolution_nsga(
     nsga = NSGAII(
         population_size=population_size,
         n_opt_params=num_params,
+<<<<<<< HEAD
         n_parents= 4*population_size // 5,  # Keep 75% of population as parents for more selection pressure
         bounds=(-1, 1),
         mutation_prob=0.4,
@@ -292,6 +300,13 @@ def run_evolution_nsga(
         output_dir=ckpt_dir,
         #pretrained_path= "results/20260319_105808_neural_controller_ckpts/15/x_best.npy",
         noise_std=0.2
+=======
+        n_parents=population_size,
+        bounds=(-1, 1),
+        mutation_prob=0.3,
+        crossover_prob=0.5,
+        output_dir=ckpt_dir,
+>>>>>>> 8c1c7e34320e0087b4e9285a041007c5b24ea038
     )
 
     # Evolution loop
@@ -409,7 +424,11 @@ def plot_pareto_fronts_from_checkpoint(checkpoint_dir: str):
     Loads fitness data from a checkpoint directory and plots Pareto fronts using NSGA-II sorting.
     """
     # Load all generations' fitness data
+<<<<<<< HEAD
     fitness_path = f"{checkpoint_dir}/f.npy"
+=======
+    fitness_path = f"{checkpoint_dir}/full_f.npy"
+>>>>>>> 8c1c7e34320e0087b4e9285a041007c5b24ea038
     try:
         all_fitness = np.load(fitness_path)
     except Exception as e:
@@ -456,7 +475,10 @@ if __name__ == "__main__":
     test_exercise_implementation()
 
     # Uncomment to run full NSGA-II evolution:
+<<<<<<< HEAD
     """
+=======
+>>>>>>> 8c1c7e34320e0087b4e9285a041007c5b24ea038
     run_evolution_nsga(
         num_generations=100,
         population_size=10,
@@ -464,6 +486,7 @@ if __name__ == "__main__":
         checkpoint_path=None,
         random_seed=42,
     )
+<<<<<<< HEAD
     """
 
     # Uncomment to replay your checkpoint
@@ -477,3 +500,15 @@ if __name__ == "__main__":
         checkpoint_dir=r"results\20260324_121824_nsga_ckpts\99"
     )
    
+=======
+
+    # Uncomment to replay your checkpoint
+    # replay_checkpoint(
+    #     checkpoint_path="./results/nsga_multi_terrain_ckpt/99"
+    # )
+
+    # Uncomment to plot Pareto fronts from checkpoint
+    # plot_pareto_fronts_from_checkpoint(
+    #     checkpoint_dir="./results/nsga_multi_terrain_ckpt/99"
+    # )
+>>>>>>> 8c1c7e34320e0087b4e9285a041007c5b24ea038
