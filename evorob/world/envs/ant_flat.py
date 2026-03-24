@@ -104,21 +104,52 @@ class AntFlatEnvironment(MujocoEnv):
         # - velocity: self.data.qvel.flatten() (14 values)
         # This gives 27 total dimensions, making the task translation-invariant
         # Hint: Use np.concatenate() to combine both arrays
-        raise NotImplementedError("TODO: Implement observation function")
-
+        obs = np.concatenate([self.data.qpos[2:].flatten(), self.data.qvel.flatten()])
+        return obs
+    
     def _get_rew(self, x_velocity: float, action):
         # TODO: Implement reward function with three components:
-        # 1. forward_reward = x_velocity * forward_reward_weight (weight=1.0)
-        # 2. healthy_reward = healthy_reward_weight (weight=1.0)
-        # 3. ctrl_cost = ctrl_cost_weight * sum of squared actions (weight=0.5)
-        # Final reward = forward_reward + healthy_reward - ctrl_cost
+        # 1. forward_reward = ...
+        # 2. healthy_reward = ...
+        # 3. ctrl_cost = ...
+        # Final reward is the sum of these three components.
         # Return: (reward, reward_info_dict)
-        raise NotImplementedError("TODO: Implement reward function")
+        forward_reward_weight = 2.0
+        healthy_reward_weight = 1.0
+        ctrl_cost_weight = 0.35
+
+        critical_height_low = 0.26
+        critical_height_high = 1.0
+        
+        state = self.state_vector()
+
+        if state[2] < critical_height_low or state[2] > critical_height_high:
+            dead_penalty = -0.5
+        elif state[2] < critical_height_low*1.1 or state[2] > critical_height_high*0.9:
+            dead_penalty = -0.002
+        else:
+            dead_penalty = 0.0
+        
+        forward_reward = x_velocity * forward_reward_weight
+        healthy_reward = healthy_reward_weight 
+        ctrl_cost = ctrl_cost_weight * np.sum(action ** 2)
+
+        reward = forward_reward + healthy_reward - ctrl_cost  + dead_penalty
+        reward_info = {
+            "reward_forward": forward_reward,
+            "reward_survive": healthy_reward,
+            "reward_ctrl": - ctrl_cost,
+        }
+        return reward, reward_info
 
     def _get_termination(self):
         # TODO: Robot should terminate when:
-        # - Any value in state is not finite (check with np.isfinite(state).all())
-        # - Torso height (state[2]) is below 0.26 or above 1.0
+        # - Torso height is below 0.26 or above 1.0
         # Return True if NOT healthy (i.e., should terminate)
         # Hint: Use self.state_vector() to get current state
-        raise NotImplementedError("TODO: Implement termination function")
+        state = self.state_vector()
+        if not np.isfinite(state).all():
+            return True
+        if state[2] < 0.26 or state[2] > 1.0:
+            return True
+        return False
