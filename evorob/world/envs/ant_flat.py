@@ -114,7 +114,7 @@ class AntFlatEnvironment(MujocoEnv):
         # 3. ctrl_cost = ...
         # Final reward is the sum of these three components.
         # Return: (reward, reward_info_dict)
-        forward_reward_weight = 2.0
+        forward_reward_weight = 1.0
         healthy_reward_weight = 1.0
         ctrl_cost_weight = 0.35
 
@@ -134,7 +134,7 @@ class AntFlatEnvironment(MujocoEnv):
         healthy_reward = healthy_reward_weight 
         ctrl_cost = ctrl_cost_weight * np.sum(action ** 2)
 
-        reward = forward_reward + healthy_reward - ctrl_cost  + dead_penalty
+        reward = forward_reward + healthy_reward - ctrl_cost # + dead_penalty
         reward_info = {
             "reward_forward": forward_reward,
             "reward_survive": healthy_reward,
