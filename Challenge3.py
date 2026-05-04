@@ -6,13 +6,17 @@ from PIL import Image
 import scipy.ndimage
 
 import gymnasium as gym
+import matplotlib.pyplot as plt
+
 import imageio
 import numpy as np
 from gymnasium.vector import AsyncVectorEnv
 from tqdm import trange
 
 #TODO: set for cmaes
-from evorob.algorithms.ea_api_sol import EvoAlgAPI
+#from evorob.algorithms.ea_api_sol import EvoAlgAPI
+from evorob.algorithms.ea_api import EvoAlgAPI
+#from evorob.algorithms.ea_api import CMAES, CMAES_opts
 from evorob.algorithms.nsga import NSGAII
 from evorob.utils.filesys import (
     get_distinct_filename,
@@ -20,7 +24,8 @@ from evorob.utils.filesys import (
     get_project_root,
 )
 from evorob.world.base import World
-from evorob.world.robot.controllers.mlp_sol import NeuralNetworkController
+#from evorob.world.robot.controllers.mlp_sol import NeuralNetworkController
+from evorob.world.robot.controllers.mlp import NeuralNetworkController
 from evorob.world.robot.controllers.so2 import SO2Controller
 from evorob.world.robot.controllers.mlp_hebbian import HebbianController
 from evorob.world.robot.morphology.ant_custom_robot import AntRobot
@@ -93,8 +98,15 @@ class AntWorld(World):
         return envs
 
     def geno2pheno(self, genotype):
-        control_weights = genotype[:self.n_weights]*0.1
-        body_params = (genotype[self.n_weights:]+1)/4+0.1
+        #print("geno2pheno sos")
+        #to run evol
+        #control_weights = genotype[:self.n_weights]*0.1
+        #To run challenge 1
+        control_weights = genotype[:self.n_weights]*1.0
+        body_params = (genotype[0:8]+1)/4+0.1
+        #body_params = (genotype[self.n_weights:]+1)/4+0.1
+        print(len(body_params))
+        print(self.n_body_params)
         assert len(body_params) == self.n_body_params
         assert len(control_weights) == self.n_weights
         assert not np.any(body_params <= 0)
@@ -156,9 +168,9 @@ class AntWorld(World):
         # 1. Create the Slope (Gradient along X)
         # 0.0 at the back, 1.0 at the front
         # TODO: Change the terrain parameters
-        slope_deg = 0.0
-        bump_scale = 0.0
-        sigma = 1.0
+        slope_deg = 5.0
+        bump_scale = 0.1
+        sigma = 3.0
 
         # 1. Create Linear Slope (Gradient along X)
         rise = np.tan(np.deg2rad(slope_deg))
@@ -206,10 +218,20 @@ class AntWorld(World):
 
             # Store rewards for active environments only
             # TODO: design appropriate rewards
-            rewards_full[step, ~done_mask] = rewards[~done_mask]
+            forward = np.array(infos.get("reward_forward", np.zeros(n_repeats)))
+            healthy = np.array(infos.get("healthy_reward", np.zeros(n_repeats)))
+            ctrl    = np.array(infos.get("ctrl_cost",       np.zeros(n_repeats)))
+
+            rewards_full[step, ~done_mask] = (forward + healthy - 0.5 * ctrl)[~done_mask]
+            #rewards_full[step, ~done_mask] = rewards[~done_mask]
 
             # TODO: design appropriate moo-rewards
             multi_obj_reward = np.array([infos["z_velocity"], -infos["ctrl_cost"]]).T # TODO
+            multi_obj_rewards_full[step, ~done_mask] = multi_obj_reward[~done_mask]
+
+            obj1 = forward + healthy          # objectif 1 : avancer et rester en vie
+            obj2 = -ctrl                      # objectif 2 : efficacité énergétique
+            multi_obj_reward = np.stack([obj1, obj2], axis=1)  # shape (n_repeats, 2)
             multi_obj_rewards_full[step, ~done_mask] = multi_obj_reward[~done_mask]
 
             # Update the done mask based on the "done" and "truncated" flags
@@ -371,6 +393,16 @@ def evaluate_checkpoint(
     else:
         print("Warning: population/fitness not found — using x_best for all three roles.")
         spec1_g = spec2_g = gen_g = x_best
+    # --- Comparaison des 8 premières valeurs des génotypes ---
+    print("\nComparaison des 8 premières valeurs (génotypes spécialistes) :")
+    print("Index | Specialist obj1 | Specialist obj2")
+    print("------------------------------------------")
+
+    g1 = spec1_g[:8]
+    g2 = spec2_g[:8]
+
+    for i in range(8):
+        print(f"{i:5d} | {g1[i]:16.6f} | {g2[i]:16.6f}")
 
     # --- AntWorld uses whatever controller the student configured ---
     world = AntWorld()
@@ -454,6 +486,7 @@ def evaluate_checkpoint(
 
 
 def run_EA_single(ea_single, world):
+    print("SINGLE")
     for _ in trange(ea_single.n_gen):
         pop = ea_single.ask()
         fitnesses_gen = np.empty(len(pop))
@@ -464,6 +497,7 @@ def run_EA_single(ea_single, world):
 
 
 def run_EA_multi(ea_multi, world):
+    print("Multi")
     for _ in trange(ea_multi.n_gen):
         pop = ea_multi.ask()
         fitnesses_gen = np.empty((len(pop), 2))
@@ -472,52 +506,122 @@ def run_EA_multi(ea_multi, world):
             fitnesses_gen[index] = fit_ind
         ea_multi.tell(pop, fitnesses_gen, save_checkpoint=True)
 
+def plot_pareto_fronts_from_checkpoint(checkpoint_dir: str):
+    """
+    Loads fitness data from a checkpoint directory and plots Pareto fronts using NSGA-II sorting.
+    """
+    # Load all generations' fitness data
+    fitness_path = f"{checkpoint_dir}/f.npy"
+    try:
+        all_fitness = np.load(fitness_path)
+    except Exception as e:
+        print(f"Could not load fitness data from {fitness_path}: {e}")
+        return
+
+    # If only 2D objectives, shape is (generations, pop, 2)
+    if all_fitness.ndim == 3:
+        # Plot only the last generation by default
+        fitness = all_fitness[-1]
+    else:
+        fitness = all_fitness
+
+    nsga = NSGAII(
+        population_size=fitness.shape[0], n_opt_params=560
+    )  # n_opt_params is a dummy here
+    fronts, _ = nsga.fast_nondominated_sort(fitness)
+
+    plt.figure(figsize=(8, 6))
+    n_fronts = len(fronts)
+    colors = plt.cm.viridis(np.linspace(0, 1, n_fronts))
+    for i, front in enumerate(fronts[:n_fronts]):
+        front_fitness = fitness[front]
+        plt.scatter(
+            front_fitness[:, 0],
+            front_fitness[:, 1],
+            label=f"Front {i}",
+            color=colors[i],
+            alpha=0.7,
+        )
+
+    plt.xlabel("Fitness Objective 1")
+    plt.ylabel("Fitness Objective 2")
+    plt.title("Pareto Fronts (Last Generation)")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("pareto_fronts.png")
+    plt.show()
+    print("Pareto fronts plotted and saved as pareto_fronts.png")
+
 
 def main():
     #%% Optimise single-objective
+    CMAES_opts = {
+    "min": -1,
+    "max": 1,
+    "mutation_sigma": 0.3,
+    "num_generations": 100
+    }
     world = AntWorld()
     n_parameters = world.n_params
 
     #%% Understanding the world
+    """
     genotype = np.random.uniform(-1, 1, n_parameters)
     world.update_robot_xml(genotype)
     world.visualise_individual(genotype)
-
+    print("RUN MAIN")
+    """
     # TODO Overwrite controller and load best run exercise 1
-    state_space = ...
-    action_space = ... # Change controller
-    world.controller = NeuralNetworkController(...,
-                                               ...,
-                                               ...)
+    """
+    world = AntWorld()
+    state_space = 27
+    action_space = 8 # Change controller
+    world.controller = NeuralNetworkController(input_size=state_space,
+                                               output_size=action_space,
+                                               hidden_size=16)
     world.n_weights = world.controller.n_params
     world.n_params = world.n_weights + world.n_body_params
+    n_parameters = world.n_params
+    genotype = np.random.uniform(-1, 1, n_parameters)
+    print("RUN MAIN")
 
     result_dir = ...
-    prev_best = ... # load previous run
+    prev_best = np.load("C:/Users/hmpau/Documents/MA2/Evolutionary Robotics/Exercise/micro-515-EvoRob/Result Challenge1/x_best.npy") # load previous run
+    print(prev_best)
+    #print("prev_best:", len(prev_best))
+    #print("n_weights:", world.n_weights)
     genotype[:-8] = prev_best
 
-    genotype[-8::2] = ...  # fix upper leg length 0.2m
-    genotype[-7::2] = ...     # fix lower leg length 0.6m
+    genotype[-8::2] = -0.6  # fix upper leg length 0.2
+    genotype[-7::2] = 1  # fix lower leg length 0.6
     world.update_robot_xml(genotype)
+    #world.geno2pheno(genotype)          # ← initialise le contrôleur
     world.visualise_individual(genotype)
-
+    """
     #%% Evolve open-loop so2
+    """
     world = AntWorld()
     world.n_weights = world.controller.n_params
     world.n_params = world.n_weights + world.n_body_params
     n_parameters = world.n_params
-    population_size = 150
+    population_size = 50   #150
     opts = CMAES_opts.copy()
     opts["min"] = -1
     opts["max"] = 1
     opts["mutation_sigma"] = 0.3
-    opts["num_generations"] = 100
+    opts["num_generations"] = 25  #50
 
     results_dir = join(ROOT_DIR, "results", ENV_NAME, "single")
-    ea_single = CMAES(n_parameters, population_size, opts["num_generations"], results_dir)
+    ea_single = EvoAlgAPI(
+    n_params=n_parameters,
+    population_size=population_size,
+    num_generations=opts["num_generations"],
+    output_dir=results_dir,
+    sigma=0.3
+    )
 
     run_EA_single(ea_single, world)
-
+    
     #%% visualise
     checkpoint = get_last_checkpoint_dir(results_dir)
     best_individual = np.load(join(results_dir, checkpoint, "x_best.npy"))
@@ -526,21 +630,22 @@ def main():
     video_name = get_distinct_filename(join(results_dir, "best.mp4"))
     print(f"Finished ES run, generating video [{video_name}]...")
     world.generate_best_individual_video(env, video_name=video_name, n_steps=500)
-
+    """
 
     #%% Optimise multi-objective
+    
     world = AntWorld()
     state_space = 27
     action_space = 8 # Change controller
     world.controller = NeuralNetworkController(input_size=state_space,
                                                output_size=action_space,
-                                               hidden_size=action_space)
+                                               hidden_size=16)
     world.n_weights = world.controller.n_params
     world.n_params = world.n_weights + world.n_body_params
     n_parameters = world.n_params
     print("Number of parameters:", n_parameters)
     print("Number of weights:", world.n_weights)
-    population_size = 100
+    population_size = 50   #100 par défaut
 
     opts = {}
     opts["min"] = -1
@@ -550,7 +655,24 @@ def main():
     opts["mutation_prob"] = 0.2
     opts["crossover_prob"] = 0.5
 
-    results_dir = join(ROOT_DIR, "results", ENV_NAME, "multi")
+    results_dir = join(ROOT_DIR, "results", ENV_NAME, "multi_2")
+    ea_multi_obj = NSGAII(
+        population_size=population_size,
+        n_opt_params=n_parameters,
+        n_parents= opts["num_parents"],
+        bounds=(opts["min"], opts["max"]),
+        num_generations=opts["num_generations"],
+        mutation_prob=opts["mutation_prob"],
+        crossover_prob=opts["crossover_prob"],
+        output_dir=results_dir,
+        #pretrained_path= "Result_ch2/best_flat_controller.npy",
+        noise_std=0.15,
+    )
+
+
+
+
+    """
     ea_multi_obj = NSGAII(population_size,
                           n_parameters,
                           opts["num_parents"],
@@ -559,17 +681,25 @@ def main():
                           opts["mutation_prob"],
                           opts["crossover_prob"])
     ea_multi_obj.directory_name = results_dir
-    run_EA_multi(ea_multi_obj, world)
+    """
+    #run_EA_multi(ea_multi_obj, world)
 
     #%% visualise
     checkpoint = get_last_checkpoint_dir(results_dir)
+    """
     best_individual = np.load(join(results_dir, checkpoint, "x_best.npy"), allow_pickle=True)
+    #best_individual = np.load("results/AntHill-v0/multi/46/x_best.npy")
     world.update_robot_xml(best_individual)
     env = world.create_env(max_episode_steps=-1)
     video_name = get_distinct_filename(join(results_dir, "best.mp4"))
     print(f"Finished NSGAII run, generating video [{video_name}]...")
     world.generate_best_individual_video(env, video_name=video_name, n_steps=500)
+    """
+    evaluate_checkpoint("c:/Users/hmpau/Documents/MA2/Evolutionary Robotics/Exercise/micro-515-EvoRob/results/AntHill-v0/multi_2")
 
-
+     # Uncomment to plot Pareto fronts from checkpoint
+    #plot_pareto_fronts_from_checkpoint(
+    #    checkpoint_dir="c:/Users/hmpau/Documents/MA2/Evolutionary Robotics/Exercise/micro-515-EvoRob/results/AntHill-v0/multi_2/49"
+    #)
 if __name__ == "__main__":
     main()

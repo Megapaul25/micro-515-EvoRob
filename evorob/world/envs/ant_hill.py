@@ -124,14 +124,27 @@ class AntHillEnv(MujocoEnv, utils.EzPickle):
 
         xyz_velocity = (xyz_position_after - xyz_position_before) / self.dt
         x_velocity, y_velocity, z_velocity = xyz_velocity
+        
 
-        forward_reward = x_velocity * self._forward_reward_weight
+        if x_velocity < 0.0 : 
+            not_fast_penalty = -20
+        else : 
+            not_fast_penalty = 0
+        
+        forward_reward_weight = 2.0
+        #healthy_reward_weight = 1.0
+        ctrl_cost_weight = 0.35
+
+        #forward_reward = x_velocity * self._forward_reward_weight
+        forward_reward = x_velocity * forward_reward_weight
         healthy_reward = 1
-        ctrl_cost = np.sum(action**2)  * self._ctrl_cost_weight
+        #ctrl_cost = np.sum(action**2)  * self._ctrl_cost_weight
+        ctrl_cost = np.sum(action**2)  * ctrl_cost_weight
+        #cfrc_cost = np.sum( self.data.cfrc_ext[1:]**2) * self._cfrc_cost_weight
         cfrc_cost = np.sum( self.data.cfrc_ext[1:]**2) * self._cfrc_cost_weight
 
         #TODO change the reward for hill terrain
-        reward = healthy_reward + forward_reward -ctrl_cost -cfrc_cost
+        #reward = healthy_reward + forward_reward -ctrl_cost -cfrc_cost
         observation = self._get_obs()
 
         info = {
@@ -146,6 +159,8 @@ class AntHillEnv(MujocoEnv, utils.EzPickle):
             "y_velocity": y_velocity,
             "z_velocity": z_velocity,
         }
+
+
         terminated = False
         # Check for NaN, Inf, or huge values
         qacc = self.data.qacc
@@ -155,17 +170,38 @@ class AntHillEnv(MujocoEnv, utils.EzPickle):
             DOF = np.argwhere((np.isnan(qacc)) + (np.isinf(qacc)) + (np.abs(qacc) > 1e6)).squeeze()[0]
             print(ValueError(f'MuJoCo Warning: Nan, Inf or huge value in QACC at DOF {DOF}'))
             terminated = True
+        
+        #REFORMULATED
+        """
         if self.data.qpos[2] < 0.2 or self.data.qpos[2] > 1.0:
+            terminated = True
+        """
+        #critical_height_low = 0.01
+        """
+        if self.data.qpos[2] < critical_height_low or self.torso_upside_down():
+            dead_penalty = -0.5
+            terminated = True
+        elif self.data.qpos[2] < critical_height_low*1.1:
+            dead_penalty = -0.002
+        else:
+            dead_penalty = 0.0
+        """
+        if self.torso_upside_down() :
             terminated = True
         if terminated:
             info["healthy_reward"] = -10
+        
+
+        reward = healthy_reward + forward_reward -ctrl_cost -cfrc_cost + not_fast_penalty
 
         self.previous_state = observation
 
         if self.render_mode == "human":
             self.render()
         return observation, reward, terminated, False, info
+    
 
+        
     def torso_upside_down(self,):
         R = self.data.body(self._main_body).xmat.reshape(3, 3)
         torso_z_world = R[:, 2]
