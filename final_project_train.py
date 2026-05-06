@@ -31,13 +31,13 @@ import evorob.world                         # registers EvalEnv-v0
 from evorob.algorithms.nsga_sol import NSGAII
 from evorob.utils.filesys import get_last_checkpoint_dir, get_project_root
 from evorob.world.base import World
-from evorob.world.robot.controllers.mlp_sol import NeuralNetworkController
+from evorob.world.robot.controllers.mlp import NeuralNetworkController
 from evorob.world.robot.morphology.ant_custom_robot import AntRobot
 
 ROOT_DIR = get_project_root()
 _ASSETS  = join(ROOT_DIR, "evorob", "world", "robot", "assets")
 MAX_EPISODE_STEPS = 1000  # fixed for leaderboard — do not change
-
+SYMETRY = True
 
 # ---------------------------------------------------------------------------
 # FinalWorld — body + brain co-evolution across multiple terrains
@@ -59,11 +59,15 @@ class FinalWorld(World):
         # from evorob.world.robot.controllers.so2 import SO2Controller
         # self.controller = SO2Controller(input_size=27, output_size=8, hidden_size=8)
         self.controller = NeuralNetworkController(
-            input_size=27, output_size=8, hidden_size=8
+            input_size=27, output_size=8, hidden_size=16
         )
 
         self.n_weights     = self.controller.n_params
-        self.n_body_params = 8          # 4 legs × (upper + lower segment length)
+        if SYMETRY :
+            self.n_body_params = 4
+        else :
+            self.n_body_params = 8          # 4 legs × (upper + lower segment length) NOW 4 SINCE USE OF SYMETRY
+
         self.n_params      = self.n_weights + self.n_body_params
 
         # Temporary directory holds AntRobot.xml + one combined world XML per terrain
@@ -116,7 +120,20 @@ class FinalWorld(World):
         body_params    = (genotype[self.n_weights:] + 1) / 4 + 0.1
         self.controller.geno2pheno(control_params)
 
-        front_left_leg, front_left_ankle, front_right_leg, front_right_ankle, back_left_leg, back_left_ankle, back_right_leg, back_right_ankle, = body_params
+        
+        if SYMETRY :
+            #print(body_params)
+            front_leg, front_ankle, back_leg, back_ankle = body_params
+            
+            front_left_leg = front_right_leg = front_leg
+            front_left_ankle = front_right_ankle = front_ankle
+
+            back_left_leg = back_right_leg = back_leg
+            back_left_ankle = back_right_ankle = back_ankle
+
+            # /! Body param now of len 4
+        else :
+            front_left_leg, front_left_ankle, front_right_leg, front_right_ankle, back_left_leg, back_left_ankle, back_right_leg, back_right_ankle, = body_params
 
         # Define the 3D coordinates of the relative tree structure
         front_left_hip_xyz = np.array([0.2, 0.2, 0])
@@ -478,6 +495,7 @@ def run_multi_task_evolution(
     ckpt_interval:   int = 10,
     results_dir:     str = None,
     random_seed:     int = 42,
+    seeds : np.ndarray = None,
 ) -> None:
     np.random.seed(random_seed)
 
@@ -497,6 +515,7 @@ def run_multi_task_evolution(
         mutation_prob=mutation_prob,
         crossover_prob=crossover_prob,
         output_dir=results_dir,
+        seeds = seeds
     )
 
     n_obj = 3
@@ -553,12 +572,34 @@ def run_multi_task_evolution(
 
 if __name__ == "__main__":
     # Quick smoke-test — 2 generations, tiny population
-    run_multi_task_evolution(
-        num_generations=100,
-        population_size=32,
-        n_parents=32,
-        n_repeats=2,
-        n_steps=100,
-        ckpt_interval=1,
-        results_dir=join(ROOT_DIR, "results", "final_test"),
-    )
+    VIDEO = True
+    if not VIDEO :
+        seeds = []
+        flat_spe = np.load("flat_best.npy")
+        #print(len(flat_spe))
+        flat_spe = np.concatenate([flat_spe, np.array([0.1, 0.6, 0.1, 0.6])])
+        ice_spe = np.load("ice_best.npy")
+        #print(len(ice_spe))
+        ice_spe = np.concatenate([ice_spe, np.array([0.1, 0.6, 0.1, 0.6])])
+        #genotype = [ controller params (n_weights) | body params (4) ]
+        seeds.append(flat_spe)
+        seeds.append(ice_spe)
+        #seeds.append(np.load("hill_run/x_best.npy"))
+        
+        run_multi_task_evolution(
+            num_generations=100,
+            population_size=10,
+            n_parents=10,
+            n_repeats=2,
+            n_steps=100,
+            ckpt_interval=1,
+            results_dir=join(ROOT_DIR, "results2", "final_test"),
+            seeds = seeds
+        )
+
+    if VIDEO :
+        evaluate_checkpoint(
+            checkpoint_dir="results/final_test/0",
+            output_dir="evaluation_output2",
+            n_episodes=20  # smaller for quick test
+        )

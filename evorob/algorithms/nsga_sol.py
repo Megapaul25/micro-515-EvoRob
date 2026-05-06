@@ -50,6 +50,8 @@ class NSGAII(EA):
             mutation_prob: float = 0.3,
             crossover_prob: float = 0.1,
             output_dir: str = "./results/NSGA",
+            seeds: np.ndarray = None,
+
     ) -> None:
         """
         Initializes the NSGA-II algorithm.
@@ -86,6 +88,8 @@ class NSGAII(EA):
         # Initialize current_population for first generation
         self.current_population = None
         self.fitness = None
+
+        self.initial_seeds = seeds
 
     def ask(self) -> np.ndarray:
         """Generates a new population of candidate solutions.
@@ -174,9 +178,53 @@ class NSGAII(EA):
         Returns:
             np.ndarray: Initial population with shape (n_pop, n_params).
         """
-        return np.random.uniform(
-            low=self.min, high=self.max, size=(self.n_pop, self.n_params)
+        if self.initial_seeds is None:
+            return np.random.uniform(self.min, self.max, size=(self.n_pop, self.n_params))
+
+        seeds = np.asarray(self.initial_seeds)  # shape: (n_seeds, n_params)
+        print(seeds)
+        n_seeds = len(seeds)
+
+        population = np.empty((self.n_pop, self.n_params))
+        for i in range(0, len(population)) :
+            population[i] = seeds[0]
+
+        """
+        # Reste de la population = tes poids + petit bruit gaussien
+        noise_std = 0.5 / 4  
+        tenth = self.n_pop // 10  # 10% of the population
+        population[1:tenth] = seeds[0] + np.random.normal(
+            loc=0.0,
+            scale=noise_std,
+            size=(tenth - 1, self.n_params)
         )
+        
+        # Reste de la population = tes poids + petit bruit gaussien
+        noise_std = 0.5  # à tuner — commence petit
+        population[tenth:] = seeds[0] + np.random.normal(
+            loc=0.0,
+            scale=noise_std,
+            size=(self.n_pop - tenth, self.n_params)
+        )
+        
+
+        #if n_seeds > self.n_pop:
+        #    raise ValueError(
+        #        f"Number of seeds ({n_seeds}) exceeds population size ({self.n_pop})."
+        #    )
+
+        #n_random = self.n_pop - n_seeds
+        
+        # Sample parent seeds uniformly, then add Gaussian noise around each
+        #parent_indices = np.random.randint(0, n_seeds, size=n_random)
+        #parents = seeds[parent_indices]  # shape: (n_random, n_params)
+        #noise = np.random.normal(loc=0, scale=0.1, size=parents.shape)
+        #neighbors = np.clip(parents + noise, self.min, self.max)
+
+        #return np.vstack([seeds, neighbors])
+        """
+        print(population[0])
+        return np.clip(population, self.min, self.max)
 
     def create_children(self, population_size: int) -> np.ndarray:
         """Creates offspring using tournament selection, mutation and crossover.
