@@ -31,7 +31,7 @@ import evorob.world                         # registers EvalEnv-v0
 from evorob.algorithms.nsga_sol import NSGAII
 from evorob.utils.filesys import get_last_checkpoint_dir, get_project_root
 from evorob.world.base import World
-from evorob.world.robot.controllers.mlp import NeuralNetworkController
+from evorob.world.robot.controllers.mlp_sol import NeuralNetworkController
 from evorob.world.robot.morphology.ant_custom_robot import AntRobot
 
 ROOT_DIR = get_project_root()
@@ -572,7 +572,7 @@ def run_multi_task_evolution(
 
 if __name__ == "__main__":
     # Quick smoke-test — 2 generations, tiny population
-    VIDEO = True
+    VIDEO = False
     if not VIDEO :
         seeds = []
         flat_spe = np.load("flat_best.npy")

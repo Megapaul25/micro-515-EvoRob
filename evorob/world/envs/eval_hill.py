@@ -71,6 +71,7 @@ class EvalHillEnv(MujocoEnv, utils.EzPickle):
 
         xyz_velocity = (xyz_after - xyz_before) / self.dt
         x_velocity = float(xyz_velocity[0])
+        
         x_position = float(xyz_after[0])
 
         healthy_reward = 1.0

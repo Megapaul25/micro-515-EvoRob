@@ -61,6 +61,8 @@ class EvalIceEnv(MujocoEnv, utils.EzPickle):
             "render_fps": int(np.round(1.0 / self.dt)),
         }
 
+        self.vel_count = 0
+
         obs_size = (self.data.qpos.size - 2) + self.data.qvel.size
         self.observation_space = Box(
             low=-np.inf, high=np.inf, shape=(obs_size,), dtype=np.float64
@@ -72,11 +74,19 @@ class EvalIceEnv(MujocoEnv, utils.EzPickle):
         x_after = self.data.qpos[0]
 
         x_velocity = (x_after - x_before) / self.dt
+
+        if x_velocity < 0.1 :
+            self.vel_count += 1
+        if x_velocity  > 0.1 :
+            self.vel_count = 0
+
         healthy_reward = 1.0
         ctrl_cost = float(np.sum(action ** 2) * self._ctrl_cost_weight)
         cfrc_cost = float(np.sum(self.data.cfrc_ext[1:] ** 2) * self._cfrc_cost_weight)
 
         terminated = self._is_terminated()
+        if self.vel_count > 10 :
+            terminated = True
         reward = healthy_reward + x_velocity - ctrl_cost - cfrc_cost
 
         info = {
