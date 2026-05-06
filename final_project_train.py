@@ -587,9 +587,9 @@ if __name__ == "__main__":
         #seeds.append(np.load("hill_run/x_best.npy"))
         
         run_multi_task_evolution(
-            num_generations=100,
-            population_size=10,
-            n_parents=10,
+            num_generations=1000,
+            population_size=50,
+            n_parents=50,
             n_repeats=2,
             n_steps=100,
             ckpt_interval=1,
