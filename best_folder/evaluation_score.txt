@@ -13,20 +13,20 @@ SUMMARY
 ============================================================
 Terrain       Mean      Std      Best     Worst
 ------------------------------------------------------------
-flat       1283.85  1382.27   4914.86    -60.33
-ice         962.52  1214.13   4914.86    -60.33
+flat       1495.15  1339.51   4914.86    293.95
+ice        1157.05  1236.28   4914.86    -41.45
 hill        366.05   329.63    854.04   -432.14
 
 --------------------------------------------------
 FLAT — Per-episode rewards
 --------------------------------------------------
-  Episode   1:    1206.29
+  Episode   1:    1312.98
   Episode   2:     687.03
   Episode   3:     600.39
   Episode   4:    1028.36
   Episode   5:    1978.86
   Episode   6:     564.52
-  Episode   7:      -6.03
+  Episode   7:     863.45
   Episode   8:     728.21
   Episode   9:    2114.88
   Episode  10:    4645.44
@@ -34,23 +34,23 @@ FLAT — Per-episode rewards
   Episode  12:     308.09
   Episode  13:    1072.96
   Episode  14:     661.94
-  Episode  15:     -11.23
+  Episode  15:    2884.35
   Episode  16:    4914.86
   Episode  17:     939.69
   Episode  18:     747.10
-  Episode  19:     -60.33
+  Episode  19:     293.95
   Episode  20:    3083.47
 
 --------------------------------------------------
 ICE — Per-episode rewards
 --------------------------------------------------
-  Episode   1:    1206.29
+  Episode   1:    1312.98
   Episode   2:     687.03
   Episode   3:     600.39
   Episode   4:      -3.95
   Episode   5:    1978.86
   Episode   6:     564.52
-  Episode   7:      -6.03
+  Episode   7:     863.45
   Episode   8:     -11.46
   Episode   9:    2114.88
   Episode  10:      -9.11
@@ -58,11 +58,11 @@ ICE — Per-episode rewards
   Episode  12:     308.09
   Episode  13:    1072.96
   Episode  14:     661.94
-  Episode  15:     -11.23
+  Episode  15:    2884.35
   Episode  16:    4914.86
   Episode  17:     939.69
   Episode  18:     747.10
-  Episode  19:     -60.33
+  Episode  19:     -41.45
   Episode  20:    3083.47
 
 --------------------------------------------------

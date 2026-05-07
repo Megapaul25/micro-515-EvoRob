@@ -261,7 +261,11 @@ class FinalWorld(World):
             obs = self.sensor_fn(obs)
         done = np.zeros(n_repeats, dtype=bool)
         for t in range(n_steps):
-            actions = np.where(done[:, None], 0, self.controller.get_action(obs))
+            raw_actions = self.controller.get_action(obs)
+            if t < 15 :
+                actions = np.zeros_like(raw_actions)
+            else:
+                actions = np.where(done[:, None], 0, self.controller.get_action(obs))
             obs, r, terminated, truncated, _ = envs.step(actions)
             if self.sensor_fn is not None:
                 obs = self.sensor_fn(obs)
@@ -374,7 +378,8 @@ def evaluate_checkpoint(
             obs, _ = env.reset(seed=int(rng.integers(0, 2 ** 31)))
             total, done = 0.0, False
             while not done:
-                action = world.controller.get_action(obs)
+                #action = world.controller.get_action(obs)
+                action = 1 * world.controller.get_action(obs)
                 if action.ndim > 1:
                     action = action.squeeze(0)
                 obs, _, terminated, truncated, info = env.step(action)
@@ -396,7 +401,13 @@ def evaluate_checkpoint(
                 frames.append(env.render())
                 if step == 0:
                     print(obs[:15])
-                action = world.controller.get_action(obs)
+                #action = world.controller.get_action(obs)
+                raw_action = world.controller.get_action(obs)
+
+                if step < 15:
+                    action = np.zeros_like(raw_action)
+                else:
+                    action = 1 * world.controller.get_action(obs)
                 #action = np.zeros(8)
                 if action.ndim > 1:
                     action = action.squeeze(0)
