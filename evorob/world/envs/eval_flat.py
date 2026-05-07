@@ -68,16 +68,19 @@ class EvalFlatEnv(MujocoEnv, utils.EzPickle):
 
     def step(self, action):
         x_before = self.data.qpos[0]
+        y_before = self.data.qpos[1]
         self.do_simulation(action, self.frame_skip)
         x_after = self.data.qpos[0]
-
+        y_after = self.data.qpos[1]
+        
         x_velocity = (x_after - x_before) / self.dt
-        #print("flat vel", x_velocity)
+        y_velocity = (y_after - y_before) / self.dt
+
         if x_velocity < 0.1 :
             self.vel_count += 1
         if x_velocity  > 0.1 :
             self.vel_count = 0
-        
+
         healthy_reward = 1.0
         ctrl_cost = float(np.sum(action ** 2) * self._ctrl_cost_weight)
         cfrc_cost = float(np.sum(self.data.cfrc_ext[1:] ** 2) * self._cfrc_cost_weight)
@@ -85,8 +88,7 @@ class EvalFlatEnv(MujocoEnv, utils.EzPickle):
         terminated = self._is_terminated()
         if self.vel_count > 50 :
             terminated = True
-
-        reward = healthy_reward + x_velocity #- ctrl_cost - cfrc_cost
+        reward = healthy_reward + x_velocity - 0.5*y_velocity #- ctrl_cost - cfrc_cost
 
         info = {
             "healthy_reward": -10.0 if terminated else healthy_reward,
@@ -94,6 +96,7 @@ class EvalFlatEnv(MujocoEnv, utils.EzPickle):
             "ctrl_cost": ctrl_cost,
             "cfrc_cost": cfrc_cost,
             "x_velocity": x_velocity,
+            "y_velocity": y_velocity
         }
 
         if self.render_mode == "human":

@@ -70,10 +70,13 @@ class EvalIceEnv(MujocoEnv, utils.EzPickle):
 
     def step(self, action):
         x_before = self.data.qpos[0]
+        y_before = self.data.qpos[1]
         self.do_simulation(action, self.frame_skip)
         x_after = self.data.qpos[0]
-
+        y_after = self.data.qpos[1]
+        
         x_velocity = (x_after - x_before) / self.dt
+        y_velocity = (y_after - y_before) / self.dt
 
         if x_velocity < 0.1 :
             self.vel_count += 1
@@ -87,7 +90,7 @@ class EvalIceEnv(MujocoEnv, utils.EzPickle):
         terminated = self._is_terminated()
         if self.vel_count > 50 :
             terminated = True
-        reward = healthy_reward + x_velocity #- ctrl_cost - cfrc_cost
+        reward = healthy_reward + x_velocity - 0.5*y_velocity #- ctrl_cost - cfrc_cost
 
         info = {
             "healthy_reward": -10.0 if terminated else healthy_reward,
@@ -95,6 +98,7 @@ class EvalIceEnv(MujocoEnv, utils.EzPickle):
             "ctrl_cost": ctrl_cost,
             "cfrc_cost": cfrc_cost,
             "x_velocity": x_velocity,
+            "y_velocity": y_velocity
         }
 
         if self.render_mode == "human":

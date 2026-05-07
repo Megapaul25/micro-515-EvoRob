@@ -39,6 +39,7 @@ ROOT_DIR = get_project_root()
 _ASSETS  = join(ROOT_DIR, "evorob", "world", "robot", "assets")
 MAX_EPISODE_STEPS = 1000  # fixed for leaderboard — do not change
 SYMETRY = True
+SINGLE_OBJECTIVE = False
 
 # ---------------------------------------------------------------------------
 # FinalWorld — body + brain co-evolution across multiple terrains
@@ -262,7 +263,7 @@ class FinalWorld(World):
         done = np.zeros(n_repeats, dtype=bool)
         for t in range(n_steps):
             raw_actions = self.controller.get_action(obs)
-            if t < 15 :
+            if t < 20 :
                 actions = np.zeros_like(raw_actions)
             else:
                 actions = np.where(done[:, None], 0, self.controller.get_action(obs))
@@ -301,11 +302,17 @@ class FinalWorld(World):
         Returns a 1-D array of three objective values: [flat, ice, hill].
         """
         self.update_robot_xml(genotype)
-        return np.array([
-            self._eval_flat(n_repeats, n_steps),
-            #self._eval_ice(n_repeats, n_steps),
-            #self._eval_hill(n_repeats, n_steps),
-        ])
+        if SINGLE_OBJECTIVE : 
+            return np.array([
+                self._eval_flat(n_repeats, n_steps),
+            ])
+        else :
+            return np.array([
+                self._eval_flat(n_repeats, n_steps),
+                self._eval_ice(n_repeats, n_steps),
+                self._eval_hill(n_repeats, n_steps),
+            ])
+
 
 
 # ---------------------------------------------------------------------------
@@ -399,12 +406,12 @@ def evaluate_checkpoint(
             frames = []
             for step in range(MAX_STEPS):
                 frames.append(env.render())
-                if step == 0:
-                    print(obs[:15])
+                #if step == 0:
+                #    print(obs[:15])
                 #action = world.controller.get_action(obs)
                 raw_action = world.controller.get_action(obs)
 
-                if step < 15:
+                if step < 20:
                     action = np.zeros_like(raw_action)
                 else:
                     action = 1 * world.controller.get_action(obs)
@@ -522,32 +529,34 @@ def run_multi_task_evolution(
     if results_dir is None:
         results_dir = join(ROOT_DIR, "results", "final_project")
     
+    if SINGLE_OBJECTIVE :
+        ea = CMAESAPI(
+            n_params=world.n_params,
+            population_size=population_size,
+            num_generations=num_generations,
+            sigma = 0.1,
+            bounds=bounds,
+            output_dir=results_dir,
+        )
+        n_obj = 1
+        print("RUNNING SINGLE OBJECTIVE OPTIMIZATION")
+    else : 
 
-    ea = CMAESAPI(
-        n_params=world.n_params,
-        population_size=population_size,
-        num_generations=num_generations,
-        sigma = 0.1,
-        bounds=bounds,
-        output_dir=results_dir,
-    )
+        ea = NSGAII(
+            population_size=population_size,
+            n_opt_params=world.n_params,
+            n_parents=n_parents,
+            num_generations=num_generations,
+            bounds=bounds,
+            mutation_prob=mutation_prob,
+            crossover_prob=crossover_prob,
+            output_dir=results_dir,
+            seeds = seeds
+        )
 
-    """
-    ea = NSGAII(
-        population_size=population_size,
-        n_opt_params=world.n_params,
-        n_parents=n_parents,
-        num_generations=num_generations,
-        bounds=bounds,
-        mutation_prob=mutation_prob,
-        crossover_prob=crossover_prob,
-        output_dir=results_dir,
-        seeds = seeds
-    )
-    """
+        n_obj = 3
+        print("RUNNING MULTI OBJECTIVE OPTIMIZATION")
 
-    #n_obj = 3
-    n_obj = 1
     print(f"\nRunning {num_generations} generations  pop={population_size}")
     print(f"Objectives : [flat, ice, hill]")
     print(f"Checkpoints: {results_dir}\n")
@@ -606,29 +615,69 @@ if __name__ == "__main__":
     #env2 = world.create_env()
     #joint_names = [env2.unwrapped.model.joint(i).name for i in range(env2.unwrapped.model.njnt)]
     #print("Final Project joint names:", joint_names)
-    world = FinalWorld()
-    world.update_robot_xml(np.zeros(world.n_params))
-    env2 = world.create_env()
-    actuator_names2 = [env2.unwrapped.model.actuator(i).name for i in range(env2.unwrapped.model.nu)]
+    #world = FinalWorld()
+    #world.update_robot_xml(np.zeros(world.n_params))
+    #env2 = world.create_env()
+    #actuator_names2 = [env2.unwrapped.model.actuator(i).name for i in range(env2.unwrapped.model.nu)]
     #print(obs[:15])
-    print("Final Project actuators:", actuator_names2)
+    #print("Final Project actuators:", actuator_names2)
     VIDEO = True
 
     if not VIDEO :
         seeds = []
-        flat_spe = np.load("flat_best.npy")
-        #print(len(flat_spe))
-        flat_spe = np.concatenate([flat_spe, np.array([-0.6, 1, -0.6, 1])])
-        #print(flat_spe)
-        np.save("flat_best_updated.npy", flat_spe)
+
+        #======REMAP FLAT SPECIALIST=======
+        flat_spe = np.load("flat_best.npy")  # shape: (n_weights,)
+
+        # Output layer is the last n_con2 = 8*16 = 128 weights
+        n_input, n_hidden, n_output = 27, 16, 8
+        n_con1 = n_input * n_hidden   # 432 - input layer weights, untouched
+        n_con2 = n_hidden * n_output  # 128 - output layer weights, need reordering
+
+        # Split
+        input_weights = flat_spe[:n_con1]
+        output_weights = flat_spe[n_con1:].reshape(n_output, n_hidden)  # (8, 16)
+
+        reorder = [2, 3, 4, 5, 6, 7, 0, 1]
+        output_weights_reordered = output_weights[reorder, :]
+
+        # Reconstruct
+        flat_spe_remapped = np.concatenate([
+            input_weights,
+            output_weights_reordered.flatten(),
+        ])
+
+        # Add body params and save
+        flat_spe_remapped = np.concatenate([flat_spe_remapped, np.array([-0.6, 1.0, -0.6, 1.0])])
+        np.save("flat_best_updated.npy", flat_spe_remapped)
+
+        #=========REMAP ICE SPECIALIST=============
         ice_spe = np.load("ice_best.npy")
-        #print(len(ice_spe))
-        ice_spe = np.concatenate([ice_spe, np.array([-0.6, 1, -0.6, 1])])
-        #print(ice_spe)
-        #genotype = [ controller params (n_weights) | body params (4) ]
-        seeds.append(flat_spe)
-        seeds.append(ice_spe)
-        #seeds.append(np.load("hill_run/x_best.npy"))
+        # Output layer is the last n_con2 = 8*16 = 128 weights
+        n_input, n_hidden, n_output = 27, 16, 8
+        n_con1 = n_input * n_hidden   # 432 - input layer weights, untouched
+        n_con2 = n_hidden * n_output  # 128 - output layer weights, need reordering
+
+        # Split
+        input_weights = ice_spe[:n_con1]
+        output_weights = ice_spe[n_con1:].reshape(n_output, n_hidden)  # (8, 16)
+
+        reorder = [2, 3, 4, 5, 6, 7, 0, 1]
+        output_weights_reordered = output_weights[reorder, :]
+
+        # Reconstruct
+        ice_spe_remapped = np.concatenate([
+            input_weights,
+            output_weights_reordered.flatten(),
+        ])
+
+        # Add body params and save
+        ice_spe_remapped = np.concatenate([ice_spe_remapped, np.array([-0.6, 1.0, -0.6, 1.0])])
+        np.save("ice_best_updated.npy", ice_spe_remapped)
+        
+        seeds.append(flat_spe_remapped)
+        seeds.append(ice_spe_remapped)
+    
         
         run_multi_task_evolution(
             num_generations=10,
@@ -673,7 +722,7 @@ if __name__ == "__main__":
         #flat_spe = np.concatenate([flat_spe, np.array([0.6, 0.1, 0.6, 0.1])])
         #np.save("flat_best_updated.npy", flat_spe)
         evaluate_checkpoint(
-            checkpoint_dir="best_folder",
-            output_dir="best_folder",
+            checkpoint_dir="results2/test/9",
+            output_dir="results2/test/9",
             n_episodes=20  # smaller for quick test
         )
