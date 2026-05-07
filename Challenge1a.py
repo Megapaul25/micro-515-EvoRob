@@ -351,8 +351,11 @@ def evaluate_checkpoint(
 
         total_reward = 0.0
         done = False
-        for _ in range(max_episode_steps):
+        for step in range(max_episode_steps):
             action = controller.get_action(obs)
+            if step < 5:
+                print(f"\nSTEP {step}")
+                print("OBS:", obs[:15])
             if action.ndim > 1:
                 action = action.squeeze(0)
             obs, reward, terminated, truncated, _ = env.step(action)
