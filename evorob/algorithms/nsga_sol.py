@@ -102,6 +102,8 @@ class NSGAII(EA):
         else:
             new_population = self.create_children(self.n_pop)
         new_population = np.clip(new_population, self.min, self.max)
+        print(self.current_gen)
+        print(new_population[:2])
         return new_population
 
     def tell(self, population: np.ndarray, fitness: np.ndarray, save_checkpoint=False) -> None:
@@ -186,9 +188,11 @@ class NSGAII(EA):
         n_seeds = len(seeds)
 
         population = np.empty((self.n_pop, self.n_params))
+        population = np.tile(seeds[0], (self.n_pop, 1))
         # 1. Keep all seeds exactly as-is
+        """
         population[:n_seeds] = seeds
-
+        
         remaining = self.n_pop - n_seeds
         tenth = max(1, self.n_pop // 10)
 
@@ -205,7 +209,7 @@ class NSGAII(EA):
         # 3. Wide neighbors — sample parent seed uniformly, add large noise (exploration)
         parent_indices = np.random.randint(0, n_seeds, size=(self.n_pop - idx,))
         population[idx:] = seeds[parent_indices] + np.random.normal(0, 0.5, size=(self.n_pop - idx, self.n_params))
-
+        """
         return np.clip(population, self.min, self.max)
 
     def create_children(self, population_size: int) -> np.ndarray:

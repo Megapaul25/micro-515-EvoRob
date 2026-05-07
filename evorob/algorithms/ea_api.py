@@ -43,16 +43,22 @@ class CMAESAPI(EA):
     def tell(self, population: np.ndarray, fitnesses: np.ndarray,
              save_checkpoint: bool = False) -> None:
         self.es.tell(population.tolist(), (-fitnesses).tolist())
-
+        
         self.full_f.append(fitnesses)
         self.full_x.append(population)
         self.f = fitnesses
         self.x = population
-
-        best_idx = np.argmax(fitnesses)
+        #print("population shape:", population.shape)
+        #print("fitnesses shape:", np.shape(fitnesses))
+        print(fitnesses)
+        best_idx = np.argmax(fitnesses[0])
         if fitnesses[best_idx] > self.f_best_so_far:
             self.f_best_so_far = fitnesses[best_idx]
+            
             self.x_best_so_far = population[best_idx].copy()
+
+        print("Generation :", self.current_gen)
+        print("Fitness :",self.f_best_so_far)
 
         if save_checkpoint:
             self.save_checkpoint()

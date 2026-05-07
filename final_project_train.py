@@ -29,6 +29,7 @@ from gymnasium.vector import AsyncVectorEnv
 
 import evorob.world                         # registers EvalEnv-v0
 from evorob.algorithms.nsga_sol import NSGAII
+from evorob.algorithms.ea_api import CMAESAPI
 from evorob.utils.filesys import get_last_checkpoint_dir, get_project_root
 from evorob.world.base import World
 from evorob.world.robot.controllers.mlp_sol import NeuralNetworkController
@@ -116,20 +117,21 @@ class FinalWorld(World):
 
         Returns (points, connectivity_mat) for AntRobot construction.
         """
-        control_params = genotype[:self.n_weights] * 0.1
+        control_params = genotype[:self.n_weights]
         body_params    = (genotype[self.n_weights:] + 1) / 4 + 0.1
         self.controller.geno2pheno(control_params)
 
         
         if SYMETRY :
             #print(body_params)
-            front_leg, front_ankle, back_leg, back_ankle = body_params
+            #front_leg, front_ankle, back_leg, back_ankle = body_params
+            #-0.6, front_ankle, back_leg, back_ankle = body_params
             
-            front_left_leg = front_right_leg = front_leg
-            front_left_ankle = front_right_ankle = front_ankle
+            front_left_leg = front_right_leg = -0.6
+            front_left_ankle = front_right_ankle = 1
 
-            back_left_leg = back_right_leg = back_leg
-            back_left_ankle = back_right_ankle = back_ankle
+            back_left_leg = back_right_leg = -0.6
+            back_left_ankle = back_right_ankle = 1
 
             # /! Body param now of len 4
         else :
@@ -297,8 +299,8 @@ class FinalWorld(World):
         self.update_robot_xml(genotype)
         return np.array([
             self._eval_flat(n_repeats, n_steps),
-            self._eval_ice(n_repeats, n_steps),
-            self._eval_hill(n_repeats, n_steps),
+            #self._eval_ice(n_repeats, n_steps),
+            #self._eval_hill(n_repeats, n_steps),
         ])
 
 
@@ -505,7 +507,18 @@ def run_multi_task_evolution(
 
     if results_dir is None:
         results_dir = join(ROOT_DIR, "results", "final_project")
+    
 
+    ea = CMAESAPI(
+        n_params=world.n_params,
+        population_size=population_size,
+        num_generations=num_generations,
+        sigma = 0.1,
+        bounds=bounds,
+        output_dir=results_dir,
+    )
+
+    """
     ea = NSGAII(
         population_size=population_size,
         n_opt_params=world.n_params,
@@ -517,8 +530,10 @@ def run_multi_task_evolution(
         output_dir=results_dir,
         seeds = seeds
     )
+    """
 
-    n_obj = 3
+    #n_obj = 3
+    n_obj = 1
     print(f"\nRunning {num_generations} generations  pop={population_size}")
     print(f"Objectives : [flat, ice, hill]")
     print(f"Checkpoints: {results_dir}\n")
@@ -572,35 +587,37 @@ def run_multi_task_evolution(
 
 if __name__ == "__main__":
     # Quick smoke-test — 2 generations, tiny population
-    VIDEO = True
+    VIDEO = False
     if not VIDEO :
         seeds = []
         flat_spe = np.load("flat_best.npy")
         #print(len(flat_spe))
-        flat_spe = np.concatenate([flat_spe, np.array([0.1, 0.6, 0.1, 0.6])])
+        flat_spe = np.concatenate([flat_spe, np.array([-0.6, 1, -0.6, 1])])
+        #print(flat_spe)
         np.save("flat_best_updated.npy", flat_spe)
         ice_spe = np.load("ice_best.npy")
         #print(len(ice_spe))
-        ice_spe = np.concatenate([ice_spe, np.array([0.1, 0.6, 0.1, 0.6])])
+        ice_spe = np.concatenate([ice_spe, np.array([-0.6, 1, -0.6, 1])])
+        #print(ice_spe)
         #genotype = [ controller params (n_weights) | body params (4) ]
         seeds.append(flat_spe)
         seeds.append(ice_spe)
         #seeds.append(np.load("hill_run/x_best.npy"))
         
         run_multi_task_evolution(
-            num_generations=1000,
-            population_size=50,
-            n_parents=50,
+            num_generations=10,
+            population_size=8,
+            n_parents=8,
             n_repeats=2,
             n_steps=100,
             ckpt_interval=1,
-            results_dir=join(ROOT_DIR, "results2", "final_test"),
+            results_dir=join(ROOT_DIR, "results2", "test"),
             seeds = seeds
         )
 
     if VIDEO :
         evaluate_checkpoint(
-            checkpoint_dir="Controllers/999",
-            output_dir="evaluation_output2",
+            checkpoint_dir="results2/test/0",
+            output_dir="results2/test/0",
             n_episodes=20  # smaller for quick test
         )

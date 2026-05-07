@@ -105,7 +105,7 @@ class EvalFlatEnv(MujocoEnv, utils.EzPickle):
         return (
             not np.isfinite(self.state_vector()).all()
             or z < 0.2
-            or z > 1.0
+            or z > 2.0
         )
 
     def _get_obs(self):
