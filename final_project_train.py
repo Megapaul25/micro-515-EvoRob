@@ -32,7 +32,7 @@ from evorob.algorithms.nsga_sol import NSGAII
 from evorob.algorithms.ea_api import CMAESAPI
 from evorob.utils.filesys import get_last_checkpoint_dir, get_project_root
 from evorob.world.base import World
-from evorob.world.robot.controllers.mlp_sol import NeuralNetworkController
+from evorob.world.robot.controllers.mlp_ours import NeuralNetworkController
 from evorob.world.robot.morphology.ant_custom_robot import AntRobot
 
 ROOT_DIR = get_project_root()
@@ -117,7 +117,7 @@ class FinalWorld(World):
 
         Returns (points, connectivity_mat) for AntRobot construction.
         """
-        control_params = genotype[:self.n_weights]
+        control_params = genotype[:self.n_weights] *5
         body_params    = (genotype[self.n_weights:] + 1) / 4 + 0.1
         self.controller.geno2pheno(control_params)
 
@@ -127,11 +127,11 @@ class FinalWorld(World):
             #front_leg, front_ankle, back_leg, back_ankle = body_params
             #-0.6, front_ankle, back_leg, back_ankle = body_params
             
-            front_left_leg = front_right_leg = -0.6
-            front_left_ankle = front_right_ankle = 1
+            front_left_leg = front_right_leg = 0.2
+            front_left_ankle = front_right_ankle = 0.4
 
-            back_left_leg = back_right_leg = -0.6
-            back_left_ankle = back_right_ankle = 1
+            back_left_leg = back_right_leg = 0.2
+            back_left_ankle = back_right_ankle = 0.4
 
             # /! Body param now of len 4
         else :
@@ -587,7 +587,8 @@ def run_multi_task_evolution(
 
 if __name__ == "__main__":
     # Quick smoke-test — 2 generations, tiny population
-    VIDEO = False
+    VIDEO = True
+
     if not VIDEO :
         seeds = []
         flat_spe = np.load("flat_best.npy")
@@ -616,8 +617,11 @@ if __name__ == "__main__":
         )
 
     if VIDEO :
+        flat_spe = np.load("flat_best.npy")
+        flat_spe = np.concatenate([flat_spe, np.array([0.6, 0.1, 0.6, 0.1])])
+        np.save("flat_best_updated.npy", flat_spe)
         evaluate_checkpoint(
-            checkpoint_dir="results2/test/0",
-            output_dir="results2/test/0",
+            checkpoint_dir="best_folder",
+            output_dir="best_folder",
             n_episodes=20  # smaller for quick test
         )
