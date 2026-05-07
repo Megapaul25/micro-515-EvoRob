@@ -117,21 +117,21 @@ class FinalWorld(World):
 
         Returns (points, connectivity_mat) for AntRobot construction.
         """
-        control_params = genotype[:self.n_weights] *5
+        control_params = genotype[:self.n_weights] *1
         body_params    = (genotype[self.n_weights:] + 1) / 4 + 0.1
         self.controller.geno2pheno(control_params)
 
         
         if SYMETRY :
             #print(body_params)
-            #front_leg, front_ankle, back_leg, back_ankle = body_params
+            front_leg, front_ankle, back_leg, back_ankle = body_params
             #-0.6, front_ankle, back_leg, back_ankle = body_params
             
-            front_left_leg = front_right_leg = 0.2
-            front_left_ankle = front_right_ankle = 0.4
+            front_left_leg = front_right_leg = front_leg
+            front_left_ankle = front_right_ankle = front_ankle
 
-            back_left_leg = back_right_leg = 0.2
-            back_left_ankle = back_right_ankle = 0.4
+            back_left_leg = back_right_leg = back_leg
+            back_left_ankle = back_right_ankle = back_ankle
 
             # /! Body param now of len 4
         else :
@@ -392,9 +392,12 @@ def evaluate_checkpoint(
             world.controller.reset_controller(batch_size=1)
             obs, _ = env.reset(seed=SEED)
             frames = []
-            for _ in range(MAX_STEPS):
+            for step in range(MAX_STEPS):
                 frames.append(env.render())
+                if step == 0:
+                    print(obs[:15])
                 action = world.controller.get_action(obs)
+                #action = np.zeros(8)
                 if action.ndim > 1:
                     action = action.squeeze(0)
                 obs, _, terminated, truncated, _ = env.step(action)
@@ -587,6 +590,17 @@ def run_multi_task_evolution(
 
 if __name__ == "__main__":
     # Quick smoke-test — 2 generations, tiny population
+    #world = FinalWorld()
+    #world.update_robot_xml(np.zeros(world.n_params))
+    #env2 = world.create_env()
+    #joint_names = [env2.unwrapped.model.joint(i).name for i in range(env2.unwrapped.model.njnt)]
+    #print("Final Project joint names:", joint_names)
+    world = FinalWorld()
+    world.update_robot_xml(np.zeros(world.n_params))
+    env2 = world.create_env()
+    actuator_names2 = [env2.unwrapped.model.actuator(i).name for i in range(env2.unwrapped.model.nu)]
+    #print(obs[:15])
+    print("Final Project actuators:", actuator_names2)
     VIDEO = True
 
     if not VIDEO :
@@ -617,9 +631,36 @@ if __name__ == "__main__":
         )
 
     if VIDEO :
-        flat_spe = np.load("flat_best.npy")
-        flat_spe = np.concatenate([flat_spe, np.array([0.6, 0.1, 0.6, 0.1])])
-        np.save("flat_best_updated.npy", flat_spe)
+        flat_spe = np.load("flat_best.npy")  # shape: (n_weights,)
+
+        # Output layer is the last n_con2 = 8*16 = 128 weights
+        n_input, n_hidden, n_output = 27, 16, 8
+        n_con1 = n_input * n_hidden   # 432 - input layer weights, untouched
+        n_con2 = n_hidden * n_output  # 128 - output layer weights, need reordering
+
+        # Split
+        input_weights = flat_spe[:n_con1]
+        output_weights = flat_spe[n_con1:].reshape(n_output, n_hidden)  # (8, 16)
+
+        # Challenge1 order: [back-right-hip, back-right-ankle, front-left-hip, front-left-ankle,
+        #                    front-right-hip, front-right-ankle, back-left-hip, back-left-ankle]
+        # Final Project order: [front-left-hip, front-left-ankle, front-right-hip, front-right-ankle,
+        #                       back-left-hip, back-left-ankle, back-right-hip, back-right-ankle]
+        reorder = [2, 3, 4, 5, 6, 7, 0, 1]
+        output_weights_reordered = output_weights[reorder, :]
+
+        # Reconstruct
+        flat_spe_remapped = np.concatenate([
+            input_weights,
+            output_weights_reordered.flatten(),
+        ])
+
+        # Add body params and save
+        flat_spe_remapped = np.concatenate([flat_spe_remapped, np.array([-0.6, 1.0, -0.6, 1.0])])
+        np.save("flat_best_updated.npy", flat_spe_remapped)
+        #flat_spe = np.load("flat_best.npy")
+        #flat_spe = np.concatenate([flat_spe, np.array([0.6, 0.1, 0.6, 0.1])])
+        #np.save("flat_best_updated.npy", flat_spe)
         evaluate_checkpoint(
             checkpoint_dir="best_folder",
             output_dir="best_folder",
