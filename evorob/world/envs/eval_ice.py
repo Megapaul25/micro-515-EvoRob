@@ -87,7 +87,7 @@ class EvalIceEnv(MujocoEnv, utils.EzPickle):
         terminated = self._is_terminated()
         if self.vel_count > 10 :
             terminated = True
-        reward = healthy_reward + x_velocity - ctrl_cost - cfrc_cost
+        reward = healthy_reward + x_velocity #- ctrl_cost - cfrc_cost
 
         info = {
             "healthy_reward": -10.0 if terminated else healthy_reward,

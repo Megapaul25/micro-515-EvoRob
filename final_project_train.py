@@ -572,12 +572,13 @@ def run_multi_task_evolution(
 
 if __name__ == "__main__":
     # Quick smoke-test — 2 generations, tiny population
-    VIDEO = False
+    VIDEO = True
     if not VIDEO :
         seeds = []
         flat_spe = np.load("flat_best.npy")
         #print(len(flat_spe))
         flat_spe = np.concatenate([flat_spe, np.array([0.1, 0.6, 0.1, 0.6])])
+        np.save("flat_best_updated.npy", flat_spe)
         ice_spe = np.load("ice_best.npy")
         #print(len(ice_spe))
         ice_spe = np.concatenate([ice_spe, np.array([0.1, 0.6, 0.1, 0.6])])
@@ -599,7 +600,7 @@ if __name__ == "__main__":
 
     if VIDEO :
         evaluate_checkpoint(
-            checkpoint_dir="results/final_test/0",
+            checkpoint_dir="Controllers/999",
             output_dir="evaluation_output2",
             n_episodes=20  # smaller for quick test
         )
