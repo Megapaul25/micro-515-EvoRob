@@ -128,11 +128,11 @@ class FinalWorld(World):
             front_leg, front_ankle, back_leg, back_ankle = body_params
             #-0.6, front_ankle, back_leg, back_ankle = body_params
             
-            front_left_leg = front_right_leg = front_leg
-            front_left_ankle = front_right_ankle = front_ankle
+            back_right_leg = front_left_leg = front_leg
+            back_right_ankle = front_left_ankle = front_ankle
 
-            back_left_leg = back_right_leg = back_leg
-            back_left_ankle = back_right_ankle = back_ankle
+            back_left_leg = front_right_leg = back_leg
+            back_left_ankle = front_right_ankle = back_ankle
 
             # /! Body param now of len 4
         else :
@@ -722,7 +722,7 @@ if __name__ == "__main__":
         #flat_spe = np.concatenate([flat_spe, np.array([0.6, 0.1, 0.6, 0.1])])
         #np.save("flat_best_updated.npy", flat_spe)
         evaluate_checkpoint(
-            checkpoint_dir="results2/test/9",
-            output_dir="results2/test/9",
+            checkpoint_dir="saving/146",
+            output_dir="saving/146",
             n_episodes=20  # smaller for quick test
         )
