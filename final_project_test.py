@@ -68,7 +68,7 @@ MY_CONTROLLER = NeuralNetworkController(input_size=27, output_size=8, hidden_siz
 
 # --- Paths ---
 # Option A: directory that contains x_best.npy (recommended)
-CHECKPOINT_DIR = "result_test"
+CHECKPOINT_DIR = "best_folder/big_test/test"
 
 # Option B: provide the robot XML and genotype as separate files
 ROBOT_XML_PATH = None   # e.g. "/abs/path/to/Robot.xml"

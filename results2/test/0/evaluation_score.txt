@@ -13,79 +13,79 @@ SUMMARY
 ============================================================
 Terrain       Mean      Std      Best     Worst
 ------------------------------------------------------------
-flat        -47.83    60.14    -11.76   -263.30
-ice         -47.15    58.25    -11.85   -257.64
-hill       3114.98 14558.21  66566.57   -805.44
+flat       1478.53   907.31   3455.55    324.26
+ice        1069.91   882.80   3333.03   -101.34
+hill        543.66   458.52   2172.22     -3.16
 
 --------------------------------------------------
 FLAT — Per-episode rewards
 --------------------------------------------------
-  Episode   1:    -155.28
-  Episode   2:     -24.40
-  Episode   3:     -26.79
-  Episode   4:     -26.07
-  Episode   5:     -16.23
-  Episode   6:     -11.76
-  Episode   7:     -23.19
-  Episode   8:     -51.17
-  Episode   9:     -48.73
-  Episode  10:    -105.18
-  Episode  11:     -41.20
-  Episode  12:     -25.31
-  Episode  13:     -25.26
-  Episode  14:     -11.91
-  Episode  15:     -11.86
-  Episode  16:     -11.85
-  Episode  17:     -31.40
-  Episode  18:    -263.30
-  Episode  19:     -33.54
-  Episode  20:     -12.09
+  Episode   1:    1059.10
+  Episode   2:     932.04
+  Episode   3:    1082.40
+  Episode   4:    1601.22
+  Episode   5:    1309.48
+  Episode   6:    1174.11
+  Episode   7:    1114.96
+  Episode   8:    3455.55
+  Episode   9:    1213.44
+  Episode  10:    2665.44
+  Episode  11:     904.88
+  Episode  12:     353.56
+  Episode  13:    1236.23
+  Episode  14:     593.28
+  Episode  15:    1083.15
+  Episode  16:    1269.45
+  Episode  17:    3333.03
+  Episode  18:    3120.93
+  Episode  19:     324.26
+  Episode  20:    1744.00
 
 --------------------------------------------------
 ICE — Per-episode rewards
 --------------------------------------------------
-  Episode   1:    -149.10
-  Episode   2:     -16.97
-  Episode   3:     -15.24
-  Episode   4:     -24.29
-  Episode   5:     -24.36
-  Episode   6:     -22.18
-  Episode   7:     -16.47
-  Episode   8:     -42.51
-  Episode   9:     -40.55
-  Episode  10:     -99.18
-  Episode  11:     -35.46
-  Episode  12:     -16.42
-  Episode  13:     -20.56
-  Episode  14:     -16.36
-  Episode  15:     -13.87
-  Episode  16:     -11.85
-  Episode  17:     -31.40
-  Episode  18:    -257.64
-  Episode  19:     -28.54
-  Episode  20:     -60.08
+  Episode   1:    1059.10
+  Episode   2:     932.04
+  Episode   3:    1082.40
+  Episode   4:      -3.95
+  Episode   5:    1309.48
+  Episode   6:    1174.11
+  Episode   7:    1114.96
+  Episode   8:     -11.46
+  Episode   9:    1213.44
+  Episode  10:      -9.11
+  Episode  11:     904.88
+  Episode  12:     353.56
+  Episode  13:    1236.23
+  Episode  14:     593.28
+  Episode  15:    1083.15
+  Episode  16:    1269.45
+  Episode  17:    3333.03
+  Episode  18:    3120.93
+  Episode  19:    -101.34
+  Episode  20:    1744.00
 
 --------------------------------------------------
 HILL — Per-episode rewards
 --------------------------------------------------
-  Episode   1:    -121.67
-  Episode   2:    -247.51
-  Episode   3:     -74.33
-  Episode   4:    -109.55
-  Episode   5:    -121.79
-  Episode   6:     -36.42
-  Episode   7:     -31.38
-  Episode   8:    -159.40
-  Episode   9:    -521.40
-  Episode  10:     -63.95
-  Episode  11:     -50.67
-  Episode  12:    -543.21
-  Episode  13:    -805.44
-  Episode  14:    -137.30
-  Episode  15:    -189.71
-  Episode  16:    -214.54
-  Episode  17:    -491.95
-  Episode  18:   66566.57
-  Episode  19:     -72.54
-  Episode  20:    -274.24
+  Episode   1:     921.85
+  Episode   2:     680.43
+  Episode   3:     581.56
+  Episode   4:     471.47
+  Episode   5:     809.76
+  Episode   6:     316.77
+  Episode   7:     340.65
+  Episode   8:     124.76
+  Episode   9:     425.42
+  Episode  10:     209.19
+  Episode  11:      73.69
+  Episode  12:     473.43
+  Episode  13:    2172.22
+  Episode  14:     208.85
+  Episode  15:     553.39
+  Episode  16:     898.82
+  Episode  17:     499.55
+  Episode  18:     279.88
+  Episode  19:      -3.16
+  Episode  20:     834.76
 

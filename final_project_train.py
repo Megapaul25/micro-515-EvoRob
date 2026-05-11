@@ -39,7 +39,8 @@ ROOT_DIR = get_project_root()
 _ASSETS  = join(ROOT_DIR, "evorob", "world", "robot", "assets")
 MAX_EPISODE_STEPS = 1000  # fixed for leaderboard — do not change
 SYMETRY = True
-SINGLE_OBJECTIVE = False
+SINGLE_OBJECTIVE = True
+BODY_PARAM = False
 
 # ---------------------------------------------------------------------------
 # FinalWorld — body + brain co-evolution across multiple terrains
@@ -514,7 +515,7 @@ def run_multi_task_evolution(
     n_steps:         int = 500,
     mutation_prob:   float = 0.3,
     crossover_prob:  float = 0.5,
-    bounds:          tuple = (-1, 1),
+    bounds:          tuple = (-10, 10),
     ckpt_interval:   int = 10,
     results_dir:     str = None,
     random_seed:     int = 42,
@@ -530,14 +531,27 @@ def run_multi_task_evolution(
         results_dir = join(ROOT_DIR, "results", "final_project")
     
     if SINGLE_OBJECTIVE :
-        ea = CMAESAPI(
-            n_params=world.n_params,
+        if not BODY_PARAM :
+            ea = CMAESAPI(
+            n_params=world.n_weights,
             population_size=population_size,
             num_generations=num_generations,
-            sigma = 0.1,
+            sigma = 0.000001,
             bounds=bounds,
             output_dir=results_dir,
+            seeds = seeds
         )
+        
+        else :
+            ea = CMAESAPI(
+                n_params=world.n_params,
+                population_size=population_size,
+                num_generations=num_generations,
+                sigma = 0.000001,
+                bounds=bounds,
+                output_dir=results_dir,
+                seeds = seeds
+            )
         n_obj = 1
         print("RUNNING SINGLE OBJECTIVE OPTIMIZATION")
     else : 
@@ -565,10 +579,16 @@ def run_multi_task_evolution(
     _best_xml_stage = join(results_dir, "_best_robot.xml")  # staging copy of best robot
     _best_scalar = -np.inf
 
+    # Freeze body params from the specialist (or set manually)
+    if not BODY_PARAM :
+        frozen_body = np.array([-0.6, 1.0, -0.6, 1.0])
+
     for gen in range(num_generations):
         pop = ea.ask()
         fitnesses = np.empty((len(pop), n_obj))
         for idx, genotype in enumerate(pop):
+            if not BODY_PARAM :
+                genotype = np.concatenate([genotype, frozen_body])
             fitnesses[idx] = world.evaluate_individual(
                 genotype, n_repeats=n_repeats, n_steps=n_steps
             )
@@ -609,20 +629,7 @@ def run_multi_task_evolution(
 
 
 if __name__ == "__main__":
-    # Quick smoke-test — 2 generations, tiny population
-    #world = FinalWorld()
-    #world.update_robot_xml(np.zeros(world.n_params))
-    #env2 = world.create_env()
-    #joint_names = [env2.unwrapped.model.joint(i).name for i in range(env2.unwrapped.model.njnt)]
-    #print("Final Project joint names:", joint_names)
-    #world = FinalWorld()
-    #world.update_robot_xml(np.zeros(world.n_params))
-    #env2 = world.create_env()
-    #actuator_names2 = [env2.unwrapped.model.actuator(i).name for i in range(env2.unwrapped.model.nu)]
-    #print(obs[:15])
-    #print("Final Project actuators:", actuator_names2)
     VIDEO = True
-
     if not VIDEO :
         seeds = []
 
@@ -675,23 +682,26 @@ if __name__ == "__main__":
         ice_spe_remapped = np.concatenate([ice_spe_remapped, np.array([-0.6, 1.0, -0.6, 1.0])])
         np.save("ice_best_updated.npy", ice_spe_remapped)
         
-        seeds.append(flat_spe_remapped)
-        seeds.append(ice_spe_remapped)
+        if not BODY_PARAM :
+            seeds.append(flat_spe_remapped[:560])
+        else : 
+            seeds.append(flat_spe_remapped)
+        #seeds.append(ice_spe_remapped)
     
         
         run_multi_task_evolution(
-            num_generations=10,
+            num_generations=1,
             population_size=8,
             n_parents=8,
             n_repeats=2,
-            n_steps=100,
+            n_steps=500,
             ckpt_interval=1,
             results_dir=join(ROOT_DIR, "results2", "test"),
             seeds = seeds
         )
 
     if VIDEO :
-        flat_spe = np.load("flat_best.npy")  # shape: (n_weights,)
+        flat_spe = np.load("ice_best.npy")  # shape: (n_weights,)
 
         # Output layer is the last n_con2 = 8*16 = 128 weights
         n_input, n_hidden, n_output = 27, 16, 8
@@ -706,7 +716,8 @@ if __name__ == "__main__":
         #                    front-right-hip, front-right-ankle, back-left-hip, back-left-ankle]
         # Final Project order: [front-left-hip, front-left-ankle, front-right-hip, front-right-ankle,
         #                       back-left-hip, back-left-ankle, back-right-hip, back-right-ankle]
-        reorder = [2, 3, 4, 5, 6, 7, 0, 1]
+
+        reorder = [2, 3, 4, 5, 6, 7, 1, 0]
         output_weights_reordered = output_weights[reorder, :]
 
         # Reconstruct
@@ -717,12 +728,10 @@ if __name__ == "__main__":
 
         # Add body params and save
         flat_spe_remapped = np.concatenate([flat_spe_remapped, np.array([-0.6, 1.0, -0.6, 1.0])])
-        np.save("flat_best_updated.npy", flat_spe_remapped)
-        #flat_spe = np.load("flat_best.npy")
-        #flat_spe = np.concatenate([flat_spe, np.array([0.6, 0.1, 0.6, 0.1])])
-        #np.save("flat_best_updated.npy", flat_spe)
+        np.save("ice_best_updated_bis.npy", flat_spe_remapped)
+
         evaluate_checkpoint(
-            checkpoint_dir="saving/146",
-            output_dir="saving/146",
+            checkpoint_dir="results2/test/0",
+            output_dir="results2/test/0",
             n_episodes=20  # smaller for quick test
         )

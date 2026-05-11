@@ -88,7 +88,7 @@ class EvalFlatEnv(MujocoEnv, utils.EzPickle):
         terminated = self._is_terminated()
         if self.vel_count > 50 :
             terminated = True
-        reward = healthy_reward + x_velocity - 0.5*y_velocity #- ctrl_cost - cfrc_cost
+        reward = healthy_reward + x_velocity - 2*y_velocity #- ctrl_cost - cfrc_cost
 
         info = {
             "healthy_reward": -10.0 if terminated else healthy_reward,
