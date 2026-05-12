@@ -702,7 +702,7 @@ if __name__ == "__main__":
 
     if VIDEO :
         flat_spe = np.load("ice_best.npy")  # shape: (n_weights,)
-
+        
         # Output layer is the last n_con2 = 8*16 = 128 weights
         n_input, n_hidden, n_output = 27, 16, 8
         n_con1 = n_input * n_hidden   # 432 - input layer weights, untouched
@@ -727,11 +727,12 @@ if __name__ == "__main__":
         ])
 
         # Add body params and save
-        flat_spe_remapped = np.concatenate([flat_spe_remapped, np.array([-0.6, 1.0, -0.6, 1.0])])
-        np.save("ice_best_updated_bis.npy", flat_spe_remapped)
+        flat = np.load("best_folder/flat_straight/x_best_whothout_body2.npy")
+        flat_with_body = np.concatenate([flat, np.array([-0.6, 1.0, -0.6, 1.0])])
+        np.save("best_folder/flat_straight/x_best.npy", flat_with_body)
 
         evaluate_checkpoint(
-            checkpoint_dir="results2/test/0",
-            output_dir="results2/test/0",
+            checkpoint_dir="best_folder/flat_straight",
+            output_dir="best_folder/flat_straight",
             n_episodes=20  # smaller for quick test
         )

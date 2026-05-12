@@ -58,6 +58,7 @@ class EvalHillEnv(MujocoEnv, utils.EzPickle):
             "render_modes": ["human", "rgb_array", "depth_array"],
             "render_fps": int(np.round(1.0 / self.dt)),
         }
+        self.vel_count = 0
 
         obs_size = (self.data.qpos.size - 2) + self.data.qvel.size
         self.observation_space = Box(
@@ -66,20 +67,30 @@ class EvalHillEnv(MujocoEnv, utils.EzPickle):
 
     def step(self, action):
         xyz_before = self.data.body(1).xpos[:3].copy()
+        y_before = self.data.qpos[1]
         self.do_simulation(action, self.frame_skip)
         xyz_after = self.data.body(1).xpos[:3].copy()
+        y_after = self.data.qpos[1]
 
         xyz_velocity = (xyz_after - xyz_before) / self.dt
         x_velocity = float(xyz_velocity[0])
-        
+        y_velocity = (y_after - y_before) / self.dt
         x_position = float(xyz_after[0])
+
+        if x_velocity < 0.1 :
+            self.vel_count += 1
+        if x_velocity  > 0.1 :
+            self.vel_count = 0
 
         healthy_reward = 1.0
         ctrl_cost = float(np.sum(action ** 2) * self._ctrl_cost_weight)
         cfrc_cost = float(np.sum(self.data.cfrc_ext[1:] ** 2) * self._cfrc_cost_weight)
 
         terminated = self._is_terminated(xyz_velocity)
-        reward = healthy_reward + x_position #- ctrl_cost - cfrc_cost
+        if terminated :
+            healthy_reward = -10
+
+        reward = healthy_reward + x_position - 2*abs(y_velocity) #- ctrl_cost - cfrc_cost
 
         info = {
             "healthy_reward": -10.0 if terminated else healthy_reward,
