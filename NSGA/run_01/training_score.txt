@@ -1,0 +1,14 @@
+============================================================
+MICRO-515 Final Project — Training Summary
+============================================================
+
+Generations     : 50
+Population size : 25
+Controller      : NeuralNetworkController  (560 params)
+Genotype size   : 564  (controller=560, body=4)
+
+Best individual (highest sum of objectives):
+  flat  :    1176.28
+  ice   :    1207.37
+  hill  :      72.93
+  sum   :    2456.58

@@ -39,8 +39,8 @@ ROOT_DIR = get_project_root()
 _ASSETS  = join(ROOT_DIR, "evorob", "world", "robot", "assets")
 MAX_EPISODE_STEPS = 1000  # fixed for leaderboard — do not change
 SYMETRY = True
-SINGLE_OBJECTIVE = True
-BODY_PARAM = False
+SINGLE_OBJECTIVE = False
+BODY_PARAM = True
 
 # ---------------------------------------------------------------------------
 # FinalWorld — body + brain co-evolution across multiple terrains
@@ -629,13 +629,17 @@ def run_multi_task_evolution(
 
 
 if __name__ == "__main__":
-    VIDEO = True
+    VIDEO = False
     if not VIDEO :
         seeds = []
 
         #======REMAP FLAT SPECIALIST=======
-        flat_spe = np.load("flat_best.npy")  # shape: (n_weights,)
+        #flat_spe = np.load("flat_best.npy")  # shape: (n_weights,)
+        flat_spe = np.load("best_folder/NSGA_SPE/flat_specialist/x_best.npy")
+        ice_spe = np.load("best_folder/NSGA_SPE/ice_specialist/x_best.npy")
+        hill_spe = np.load("best_folder/NSGA_SPE/hill_specialist/x_best.npy")
 
+        """
         # Output layer is the last n_con2 = 8*16 = 128 weights
         n_input, n_hidden, n_output = 27, 16, 8
         n_con1 = n_input * n_hidden   # 432 - input layer weights, untouched
@@ -681,58 +685,70 @@ if __name__ == "__main__":
         # Add body params and save
         ice_spe_remapped = np.concatenate([ice_spe_remapped, np.array([-0.6, 1.0, -0.6, 1.0])])
         np.save("ice_best_updated.npy", ice_spe_remapped)
-        
-        if not BODY_PARAM :
-            seeds.append(flat_spe_remapped[:560])
-        else : 
-            seeds.append(flat_spe_remapped)
+        """
+
+        #if not BODY_PARAM :
+        #    seeds.append(flat_spe_remapped[:560])
+        #else : 
+        #    seeds.append(flat_spe_remapped)
         #seeds.append(ice_spe_remapped)
-    
+        seeds.append(flat_spe)
+        seeds.append(ice_spe)
+        seeds.append(hill_spe)
         
         run_multi_task_evolution(
-            num_generations=1,
-            population_size=8,
-            n_parents=8,
-            n_repeats=2,
+            num_generations=50,
+            population_size=25,
+            n_parents=25,
+            n_repeats=4,
             n_steps=500,
             ckpt_interval=1,
-            results_dir=join(ROOT_DIR, "results2", "test"),
+            results_dir=join(ROOT_DIR, "NSGA", "run_01"),
             seeds = seeds
         )
 
     if VIDEO :
-        flat_spe = np.load("ice_best.npy")  # shape: (n_weights,)
-        
+        RESHAPE = False
+        ADD_BODY_PARAM = False
+        flat_spe = np.load("best_folder/NSGA_SPE/ice_specialist/x_best.npy")  # shape: (n_weights,)
+        print(len(flat_spe))
         # Output layer is the last n_con2 = 8*16 = 128 weights
-        n_input, n_hidden, n_output = 27, 16, 8
-        n_con1 = n_input * n_hidden   # 432 - input layer weights, untouched
-        n_con2 = n_hidden * n_output  # 128 - output layer weights, need reordering
+        if RESHAPE : 
+            n_input, n_hidden, n_output = 27, 16, 8
+            n_con1 = n_input * n_hidden   # 432 - input layer weights, untouched
+            n_con2 = n_hidden * n_output  # 128 - output layer weights, need reordering
 
-        # Split
-        input_weights = flat_spe[:n_con1]
-        output_weights = flat_spe[n_con1:].reshape(n_output, n_hidden)  # (8, 16)
+            # Split
+            input_weights = flat_spe[:n_con1]
+            output_weights = flat_spe[n_con1:].reshape(n_output, n_hidden)  # (8, 16)
 
-        # Challenge1 order: [back-right-hip, back-right-ankle, front-left-hip, front-left-ankle,
-        #                    front-right-hip, front-right-ankle, back-left-hip, back-left-ankle]
-        # Final Project order: [front-left-hip, front-left-ankle, front-right-hip, front-right-ankle,
-        #                       back-left-hip, back-left-ankle, back-right-hip, back-right-ankle]
+            # Challenge1 order: [back-right-hip, back-right-ankle, front-left-hip, front-left-ankle,
+            #                    front-right-hip, front-right-ankle, back-left-hip, back-left-ankle]
+            # Final Project order: [front-left-hip, front-left-ankle, front-right-hip, front-right-ankle,
+            #                       back-left-hip, back-left-ankle, back-right-hip, back-right-ankle]
 
-        reorder = [2, 3, 4, 5, 6, 7, 1, 0]
-        output_weights_reordered = output_weights[reorder, :]
+            reorder = [2, 3, 4, 5, 6, 7, 1, 0]
+            output_weights_reordered = output_weights[reorder, :]
 
-        # Reconstruct
-        flat_spe_remapped = np.concatenate([
-            input_weights,
-            output_weights_reordered.flatten(),
-        ])
-
+            # Reconstruct
+            flat_spe_remapped = np.concatenate([
+                input_weights,
+                output_weights_reordered.flatten(),
+            ])
+            print("REMAPPED")
+        
         # Add body params and save
-        flat = np.load("best_folder/flat_straight/x_best_whothout_body2.npy")
-        flat_with_body = np.concatenate([flat, np.array([-0.6, 1.0, -0.6, 1.0])])
-        np.save("best_folder/flat_straight/x_best.npy", flat_with_body)
+        if ADD_BODY_PARAM or len(flat_spe) == 560 :
+            print("ADD_BODY_PARAM")
+            flat_spe = np.concatenate([flat_spe, np.array([0.05, 0.9, 0.05, 0.9])])
+            #np.save("best_folder/hill_spe/x_best.npy", flat_with_body)
+
+        #DONT KEEP
+        #flat_spe[-4:] = np.array([0.014, 0.467, 0.014, 0.467])
+        np.save("best_folder/NSGA_SPE/ice_specialist/x_best.npy", flat_spe)
 
         evaluate_checkpoint(
-            checkpoint_dir="best_folder/flat_straight",
-            output_dir="best_folder/flat_straight",
+            checkpoint_dir="best_folder/NSGA_SPE/ice_specialist",
+            output_dir="best_folder/NSGA_SPE/ice_specialist",
             n_episodes=20  # smaller for quick test
         )

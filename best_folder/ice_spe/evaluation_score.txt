@@ -1,0 +1,91 @@
+============================================================
+MICRO-515 Final Project — Evaluation Results
+============================================================
+
+Controller      : NeuralNetworkController (560 params)
+Genotype size   : 564  (controller=560, body=4)
+Checkpoint      : best_folder/ice_spe
+Episodes/terrain: 20
+Reward          : healthy_reward + x_position - ctrl_cost - cfrc_cost
+
+============================================================
+SUMMARY
+============================================================
+Terrain       Mean      Std      Best     Worst
+------------------------------------------------------------
+flat       6968.99  3808.49  18232.20   2690.59
+ice        6773.19  4006.44  18232.20    934.97
+hill       2166.04  2124.81   7331.53    139.78
+
+--------------------------------------------------
+FLAT — Per-episode rewards
+--------------------------------------------------
+  Episode   1:   18232.20
+  Episode   2:    2690.59
+  Episode   3:    4555.58
+  Episode   4:    4979.34
+  Episode   5:    6496.48
+  Episode   6:    9314.89
+  Episode   7:    6139.50
+  Episode   8:    7840.13
+  Episode   9:    6714.58
+  Episode  10:    4290.68
+  Episode  11:    6135.84
+  Episode  12:   15291.31
+  Episode  13:    5508.02
+  Episode  14:    4121.24
+  Episode  15:    4393.24
+  Episode  16:    5214.99
+  Episode  17:    5129.05
+  Episode  18:    5448.39
+  Episode  19:   11665.70
+  Episode  20:    5218.00
+
+--------------------------------------------------
+ICE — Per-episode rewards
+--------------------------------------------------
+  Episode   1:   18232.20
+  Episode   2:    2690.59
+  Episode   3:     934.97
+  Episode   4:    4979.34
+  Episode   5:    6496.48
+  Episode   6:    9314.89
+  Episode   7:    6139.50
+  Episode   8:    7840.13
+  Episode   9:    6714.58
+  Episode  10:    4290.68
+  Episode  11:    6135.84
+  Episode  12:   15291.31
+  Episode  13:    5508.02
+  Episode  14:    4121.24
+  Episode  15:    4393.24
+  Episode  16:    5214.99
+  Episode  17:    5129.05
+  Episode  18:    5448.39
+  Episode  19:   11665.70
+  Episode  20:    4922.72
+
+--------------------------------------------------
+HILL — Per-episode rewards
+--------------------------------------------------
+  Episode   1:     957.01
+  Episode   2:    5718.14
+  Episode   3:    2815.01
+  Episode   4:     339.33
+  Episode   5:     890.02
+  Episode   6:    2852.93
+  Episode   7:     336.77
+  Episode   8:     660.32
+  Episode   9:    1687.97
+  Episode  10:    1300.30
+  Episode  11:    1767.27
+  Episode  12:    1157.88
+  Episode  13:    7331.53
+  Episode  14:    3878.70
+  Episode  15:    1906.50
+  Episode  16:    1041.75
+  Episode  17:    1287.43
+  Episode  18:    6980.48
+  Episode  19:     271.65
+  Episode  20:     139.78
+

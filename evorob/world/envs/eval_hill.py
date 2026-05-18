@@ -90,7 +90,7 @@ class EvalHillEnv(MujocoEnv, utils.EzPickle):
         if terminated :
             healthy_reward = -10
 
-        reward = healthy_reward + x_position - 2*abs(y_velocity) #- ctrl_cost - cfrc_cost
+        reward = healthy_reward + x_velocity - 2*abs(y_velocity) #- ctrl_cost - cfrc_cost
 
         info = {
             "healthy_reward": -10.0 if terminated else healthy_reward,

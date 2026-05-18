@@ -8,5 +8,7 @@ Controller      : NeuralNetworkController  (560 params)
 Genotype size   : 564  (controller=560, body=4)
 
 Best individual (highest sum of objectives):
-  flat  :      35.04
-  sum   :      35.04
+  flat  :    1200.45
+  ice   :    1256.04
+  hill  :      52.08
+  sum   :    2508.57
